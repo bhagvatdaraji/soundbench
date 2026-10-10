@@ -4,7 +4,10 @@ import { fileSafe, measurementCsv } from '../../export/csv';
 import { shareOrDownload } from '../../export/share';
 import { deleteMeasurement, renameMeasurement, useMeasurements, type Measurement } from '../../store/measurements';
 
-const MODULE_LABEL: Record<string, string> = { rta: 'RTA', fft: 'FFT', spl: 'SPL Meter', logger: 'SPL Logger', soundscope: 'SoundScope' };
+import { MODULES } from '..';
+
+/** Saved measurements carry the id of the instrument that made them. */
+const moduleLabel = (id: string) => (id === 'impulse' ? 'Impulse / RT60' : MODULES.find((m) => m.id === id)?.title ?? id);
 
 export function Saved() {
   const items = useMeasurements();
@@ -35,7 +38,7 @@ export function Saved() {
               <div>
                 <div className="saved-name">{m.name}</div>
                 <div className="saved-meta">
-                  {MODULE_LABEL[m.module] ?? m.module} · {new Date(m.createdAt).toLocaleString()}
+                  {moduleLabel(m.module)} · {new Date(m.createdAt).toLocaleString()}
                 </div>
                 <div className="saved-actions">
                   <button className="icon-btn" onClick={() => exportCsv(m)} aria-label={`Export ${m.name} as CSV`} title="Export CSV">

@@ -574,3 +574,23 @@
 .mti-val { font-size: var(--fs-xs); }
 .mti-f { font-size: var(--fs-xs); color: var(--text-dim); }
 .stipa .progress, .polarity .progress { align-self: stretch; }
+
+/* ---------- About ---------- */
+.about { max-width: 640px; margin: 0 auto; padding: 16px 16px 28px; line-height: 1.5; }
+.about h2 { margin: 0; font-size: var(--fs-xl); }
+.about h3 { margin: 22px 0 8px; font-size: var(--fs-xs); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); }
+.about p, .about li { color: var(--text-dim); font-size: var(--fs-sm); }
+.about ul { padding-left: 18px; margin: 0; }
+.about-head .num { margin: 2px 0 8px; color: var(--text-faint); }
+.about-item {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 0;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.about-item strong { display: block; }
+.about-help { display: block; color: var(--text-dim); font-size: var(--fs-sm); }
+.tile-icon.small { width: 36px; height: 36px; margin: 0; border-radius: 10px; }

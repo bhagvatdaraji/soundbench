@@ -8,13 +8,19 @@ test.beforeEach(async ({ page }) => {
   await page.evaluate(() => localStorage.clear());
 });
 
-test('home lists the instruments', async ({ page }) => {
+test('home lists every instrument in groups, and About shows the version', async ({ page }) => {
   const errors = trackErrors(page);
   await page.goto('./');
   await expect(page.getByRole('heading', { name: 'SoundBench' })).toBeVisible();
-  for (const name of ['SPL Meter', 'RTA', 'FFT', 'Generator']) {
+  for (const section of ['Measure', 'Analyze', 'Room & speakers', 'Generate', 'Setup']) {
+    await expect(page.getByRole('heading', { name: section })).toBeVisible();
+  }
+  for (const name of ['SPL Meter', 'Level Meter', 'RTA', 'FFT', 'Distortion', 'Impulse / RT60', 'LARSA', 'Transfer Function', 'Polarity', 'STIPA', 'Generator']) {
     await expect(page.locator('.tile', { hasText: name }).first()).toBeEnabled();
   }
+  await expect(page.getByText('Coming soon')).toHaveCount(0);
+  await page.locator('.tile', { hasText: 'About & help' }).click();
+  await expect(page.getByText(/Version \d+\.\d+\.\d+/)).toBeVisible();
   expect(errors).toEqual([]);
 });
 

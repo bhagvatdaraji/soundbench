@@ -121,6 +121,7 @@ export function Impulse() {
   return (
     <ModuleScreen
       title="Impulse / RT60"
+      showCalBadge={false}
       chips={
         <Segmented
           label="View"
