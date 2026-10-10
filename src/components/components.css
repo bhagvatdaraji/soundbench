@@ -464,3 +464,42 @@
   .traffic-lamps { flex-direction: row; }
   .lamp { width: 56px; height: 56px; }
 }
+
+.loop-badge {
+  margin-left: auto;
+  padding: 3px 8px;
+  font: 600 10px var(--font-num);
+  letter-spacing: 0.06em;
+  color: var(--secondary);
+  border: 1px solid color-mix(in srgb, var(--secondary) 50%, transparent);
+  border-radius: 999px;
+}
+
+/* ---------- Level meter ---------- */
+.lm { max-width: 720px; margin: 0 auto; padding: 18px 16px; }
+.lm-clip {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 4px 10px;
+  font: 700 var(--fs-xs) var(--font-num);
+  border-radius: 999px;
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.lm-clip.on { color: #fff; background: var(--danger); border-color: var(--danger); }
+.lm-bar { display: grid; grid-template-columns: 44px 1fr 56px; align-items: center; gap: 10px; margin: 10px 0; }
+.lm-bar-label { font-size: var(--fs-xs); color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+.lm-bar-value { text-align: right; }
+.lm-track { position: relative; height: 22px; background: var(--surface-2); border-radius: var(--radius-sm); overflow: hidden; }
+.lm-fill {
+  height: 100%;
+  background: var(--live);
+  transition: width 40ms linear;
+}
+.lm-fill.hot { background: var(--warn); }
+.lm-fill.over { background: var(--danger); }
+.lm-fill.vu { background: var(--secondary); }
+.lm-hold { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--max-hold); }
+.lm-scale { position: relative; height: 16px; margin: 0 66px 0 54px; font-size: 10px; color: var(--text-faint); }
+.lm-scale span { position: absolute; transform: translateX(-50%); }
+.lm-readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px; margin: 22px 0 10px; }

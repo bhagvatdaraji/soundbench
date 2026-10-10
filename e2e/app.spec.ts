@@ -150,3 +150,13 @@ test('traffic light follows the limit', async ({ page }) => {
   await expect(box).toHaveAttribute('data-light', 'green');
   expect(errors).toEqual([]);
 });
+
+test('level meter reads the tone in dBFS', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('./#/level');
+  await startMic(page);
+  await expect.poll(async () => num(await readout(page, /^RMS$/)), { timeout: 10_000 }).toBeCloseTo(-20, 0);
+  expect(num(await readout(page, 'Crest'))).toBeCloseTo(3, 0);
+  await expect(page.getByRole('status')).toHaveText('No clipping');
+  expect(errors).toEqual([]);
+});

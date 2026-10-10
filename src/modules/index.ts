@@ -3,6 +3,7 @@ import type { IconName } from '../components/Icon';
 import { Calibration } from './calibration/Calibration';
 import { Fft } from './fft/Fft';
 import { Generator } from './generator/Generator';
+import { LevelMeter } from './level/LevelMeter';
 import { Logger } from './logger/Logger';
 import { Rta } from './rta/Rta';
 import { TrafficLight } from './traffic/TrafficLight';
@@ -23,6 +24,7 @@ export interface InstrumentModule {
 /** Order here is the order on the home screen. */
 export const MODULES: InstrumentModule[] = [
   { id: 'spl', title: 'SPL Meter', blurb: 'A/C/Z, Fast/Slow, Leq', icon: 'meter', Screen: SplMeter },
+  { id: 'level', title: 'Level Meter', blurb: 'Peak, RMS, VU, clip', icon: 'bars', Screen: LevelMeter },
   { id: 'rta', title: 'RTA', blurb: '1/1 & 1/3 octave', icon: 'bars', Screen: Rta },
   { id: 'fft', title: 'FFT', blurb: 'Up to 32k points', icon: 'spectrum', Screen: Fft },
   { id: 'generator', title: 'Generator', blurb: 'Sine, noise, sweep', icon: 'sine', Screen: Generator },

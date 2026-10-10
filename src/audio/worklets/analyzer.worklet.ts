@@ -11,6 +11,7 @@ class AnalyzerProcessor extends AudioWorkletProcessor {
   private capture = false;
   private captureBuf = new Float32Array(CAPTURE_BLOCK);
   private capturePos = 0;
+  private captureFrame = 0;
   private readonly reportEvery = Math.round(sampleRate / REPORT_RATE);
   private sinceReport = 0;
 
@@ -45,13 +46,14 @@ class AnalyzerProcessor extends AudioWorkletProcessor {
     if (this.capture) {
       let i = 0;
       while (i < input.length) {
+        if (this.capturePos === 0) this.captureFrame = currentFrame + i;
         const n = Math.min(input.length - i, CAPTURE_BLOCK - this.capturePos);
         this.captureBuf.set(input.subarray(i, i + n), this.capturePos);
         this.capturePos += n;
         i += n;
         if (this.capturePos === CAPTURE_BLOCK) {
           const full = this.captureBuf;
-          this.post({ type: 'capture', samples: full }, [full.buffer]);
+          this.post({ type: 'capture', samples: full, frame: this.captureFrame }, [full.buffer]);
           this.captureBuf = new Float32Array(CAPTURE_BLOCK);
           this.capturePos = 0;
         }

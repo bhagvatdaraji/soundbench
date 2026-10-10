@@ -2,7 +2,8 @@ import { useSyncExternalStore } from 'react';
 import type { BandResolution } from '../dsp/bands';
 import { DEFAULT_GENERATOR, type GeneratorParams } from '../dsp/generators';
 import { load, save } from '../store/persist';
-import type { AnalyzerCommand, AnalyzerEvent, GeneratorCommand } from './messages';
+import { buildLoopback, loopbackMode, type LoopbackMode } from './loopback';
+import type { AnalyzerCommand, AnalyzerEvent, GeneratorCommand, GeneratorEvent } from './messages';
 import analyzerUrl from './worklets/analyzer.worklet.ts?worker&url';
 import generatorUrl from './worklets/generator.worklet.ts?worker&url';
 
@@ -23,6 +24,7 @@ type EventMap = {
   spl: Extract<AnalyzerEvent, { type: 'spl' }>;
   rta: Extract<AnalyzerEvent, { type: 'rta' }>;
   capture: Extract<AnalyzerEvent, { type: 'capture' }>;
+  ref: GeneratorEvent;
 };
 
 /**
@@ -34,17 +36,24 @@ class AudioEngine {
   private ready: Promise<void> | null = null;
   private analyzer: AudioWorkletNode | null = null;
   private generator: AudioWorkletNode | null = null;
+  /** Everything the app plays goes through here (generator, measurement signals). */
+  private out: GainNode | null = null;
+  /** Set when the app was opened with ?loopback=… (simulated mic, see loopback.ts). */
+  readonly loopback: LoopbackMode | null = loopbackMode();
   private stream: MediaStream | null = null;
-  private source: MediaStreamAudioSourceNode | null = null;
+  private source: AudioNode | null = null;
+  private loopbackIn: AudioNode | null = null;
   private wakeLock: { release(): Promise<void> } | null = null;
   private listeners: { [K in keyof EventMap]: Set<Listener<EventMap[K]>> } = {
     spl: new Set(),
     rta: new Set(),
     capture: new Set(),
+    ref: new Set(),
   };
   private statusListeners = new Set<() => void>();
   private rtaUsers = new Map<symbol, BandResolution>();
   private captureUsers = new Set<symbol>();
+  private refUsers = new Set<symbol>();
 
   status: EngineStatus = {
     mic: 'off',
@@ -104,9 +113,15 @@ class AudioEngine {
         numberOfInputs: 0,
         outputChannelCount: [2],
       });
-      this.generator.connect(ctx.destination);
+      this.out = ctx.createGain();
+      this.out.connect(ctx.destination);
+      this.generator.connect(this.out);
+      this.generator.port.onmessage = (e: MessageEvent<GeneratorEvent>) => {
+        this.listeners.ref.forEach((l) => l(e.data));
+      };
       this.setStatus({ sampleRate: ctx.sampleRate });
       this.sendGenerator();
+      this.syncRef();
     })();
     return this.ready;
   }
@@ -115,22 +130,30 @@ class AudioEngine {
     if (this.status.mic === 'on' || this.status.mic === 'starting') return;
     this.setStatus({ mic: 'starting', error: null });
     try {
-      if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
-        throw new Error('Microphone needs HTTPS. Open the app from its https:// address.');
-      }
       const ready = this.ensureContext();
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          echoCancellation: false,
-          noiseSuppression: false,
-          autoGainControl: false,
-          channelCount: 1,
-        },
-      });
+      let stream: MediaStream | null = null;
+      if (!this.loopback) {
+        if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
+          throw new Error('Microphone needs HTTPS. Open the app from its https:// address.');
+        }
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false,
+            channelCount: 1,
+          },
+        });
+      }
       await ready;
       const ctx = this.ctx!;
       this.stream = stream;
-      this.source = ctx.createMediaStreamSource(stream);
+      if (stream) this.source = ctx.createMediaStreamSource(stream);
+      else {
+        const lb = buildLoopback(ctx, this.out!, this.loopback!);
+        this.loopbackIn = lb.input;
+        this.source = lb.output;
+      }
       this.analyzer = new AudioWorkletNode(ctx, 'soundbench-analyzer', {
         numberOfInputs: 1,
         numberOfOutputs: 1,
@@ -147,10 +170,10 @@ class AudioEngine {
       this.source.connect(this.analyzer).connect(mute).connect(ctx.destination);
       this.syncAnalyzer();
       await this.acquireWakeLock();
-      stream.getAudioTracks()[0]?.addEventListener('ended', () => this.stopMic());
+      stream?.getAudioTracks()[0]?.addEventListener('ended', () => this.stopMic());
       this.setStatus({
         mic: 'on',
-        trackSettings: stream.getAudioTracks()[0]?.getSettings() ?? null,
+        trackSettings: stream?.getAudioTracks()[0]?.getSettings() ?? null,
       });
     } catch (err) {
       const e = err as Error & { name?: string };
@@ -167,6 +190,8 @@ class AudioEngine {
     this.stream?.getTracks().forEach((t) => t.stop());
     this.source?.disconnect();
     this.analyzer?.disconnect();
+    if (this.loopbackIn) this.out?.disconnect(this.loopbackIn);
+    this.loopbackIn = null;
     this.stream = null;
     this.source = null;
     this.analyzer = null;
@@ -204,6 +229,27 @@ class AudioEngine {
       this.captureUsers.delete(id);
       this.syncAnalyzer();
     };
+  }
+
+  /** Register interest in the generator's played samples (Transfer Function reference). */
+  useRefCapture(): () => void {
+    const id = Symbol('ref');
+    this.refUsers.add(id);
+    this.syncRef();
+    return () => {
+      this.refUsers.delete(id);
+      this.syncRef();
+    };
+  }
+
+  private syncRef() {
+    const cmd: GeneratorCommand = { type: 'captureRef', enabled: this.refUsers.size > 0 };
+    this.generator?.port.postMessage(cmd);
+  }
+
+  /** The running AudioContext and output bus, for measurement playback (see measure.ts). */
+  get audio(): { ctx: AudioContext; out: GainNode } | null {
+    return this.ctx && this.out ? { ctx: this.ctx, out: this.out } : null;
   }
 
   private syncAnalyzer() {

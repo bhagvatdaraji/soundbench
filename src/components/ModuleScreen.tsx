@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useCalibration } from '../store/calibration';
 import { Icon } from './Icon';
 import { navigate } from '../router';
+import { engine } from '../audio/engine';
 
 /**
  * Standard instrument layout: top bar, main content, and a toolbar that sits at the
@@ -29,7 +30,8 @@ export function ModuleScreen({
         </button>
         <h1 className="topbar-title">{title}</h1>
         <div className="topbar-chips">{chips}</div>
-        {showCalBadge && !cal.calibratedAt && (
+        {engine.loopback && <span className="loop-badge" title="Simulated microphone (test mode)">LOOPBACK · {engine.loopback}</span>}
+        {showCalBadge && !cal.calibratedAt && !engine.loopback && (
           <button className="cal-badge" onClick={() => navigate('calibration')}>
             Uncalibrated
           </button>

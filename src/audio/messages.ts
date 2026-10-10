@@ -11,10 +11,16 @@ export type AnalyzerCommand =
 export type AnalyzerEvent =
   | { type: 'spl'; report: SplReport }
   | { type: 'rta'; resolution: BandResolution; ms: Float64Array; samples: number }
-  | { type: 'capture'; samples: Float32Array };
+  /** `frame`: context frame of samples[0] (same timeline as AudioContext.currentTime × rate). */
+  | { type: 'capture'; samples: Float32Array; frame: number };
 
 /** Main thread → generator worklet. */
-export type GeneratorCommand = { type: 'set'; params: GeneratorParams; running: boolean };
+export type GeneratorCommand =
+  | { type: 'set'; params: GeneratorParams; running: boolean }
+  | { type: 'captureRef'; enabled: boolean };
+
+/** Generator worklet → main thread: what it just played (the Transfer Function reference). */
+export type GeneratorEvent = { type: 'ref'; samples: Float32Array; frame: number };
 
 /** Reports per second sent from the analyzer worklet. */
 export const REPORT_RATE = 30;
