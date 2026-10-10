@@ -1,0 +1,59 @@
+/*
+ * Design tokens: every color, font and size the UI uses.
+ * Restyling the app should mostly mean editing this file.
+ * Canvas graphs read the same variables through theme.ts.
+ */
+:root {
+  /* surfaces */
+  --bg: #0b0b0d;
+  --surface: #16161a;
+  --surface-2: #1f1f24;
+  --border: #2c2c32;
+
+  /* text */
+  --text: #e8e8ea;
+  --text-dim: #9a9aa2;
+  --text-faint: #5f5f66;
+
+  /* graph */
+  --grid: #2a2a2f;
+  --grid-major: #3a3a3f;
+  --axis-label: #8a8a92;
+
+  /* signal colors */
+  --live: #34d399;
+  --live-dim: #1f7a5a;
+  --max-hold: #f87171;
+  --secondary: #38bdf8;
+  --warn: #fbbf24;
+  --danger: #ef4444;
+  --accent: #34d399;
+  --accent-text: #04140d;
+
+  /* analog meter */
+  --meter-face: #f3ebd3;
+  --meter-face-edge: #d9ceb0;
+  --meter-ink: #1d1b16;
+  --meter-red: #b3261e;
+  --meter-needle: #111111;
+  --meter-housing: #1a1a1d;
+
+  /* type */
+  --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, system-ui, sans-serif;
+  --font-num: 'SF Mono', ui-monospace, Menlo, 'Roboto Mono', monospace;
+  --fs-xs: 11px;
+  --fs-sm: 13px;
+  --fs-md: 15px;
+  --fs-lg: 20px;
+  --fs-xl: 32px;
+  --fs-hero: 64px;
+
+  /* shape & spacing */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --gap: 12px;
+  --pad: 16px;
+  --toolbar-size: 56px;
+  --tap: 44px;
+}

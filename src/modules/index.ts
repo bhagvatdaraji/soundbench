@@ -1,0 +1,34 @@
+import type { ComponentType } from 'react';
+import type { IconName } from '../components/Icon';
+import { Calibration } from './calibration/Calibration';
+import { Fft } from './fft/Fft';
+import { Generator } from './generator/Generator';
+import { Rta } from './rta/Rta';
+import { SplMeter } from './spl/SplMeter';
+
+export interface InstrumentModule {
+  id: string;
+  title: string;
+  blurb: string;
+  icon: IconName;
+  /** Missing = shown on the home screen as "coming soon". */
+  Screen?: ComponentType;
+}
+
+/** Order here is the order on the home screen. */
+export const MODULES: InstrumentModule[] = [
+  { id: 'spl', title: 'SPL Meter', blurb: 'A/C/Z, Fast/Slow, Leq', icon: 'meter', Screen: SplMeter },
+  { id: 'rta', title: 'RTA', blurb: '1/1 & 1/3 octave', icon: 'bars', Screen: Rta },
+  { id: 'fft', title: 'FFT', blurb: 'Up to 32k points', icon: 'spectrum', Screen: Fft },
+  { id: 'generator', title: 'Generator', blurb: 'Sine, noise, sweep', icon: 'sine', Screen: Generator },
+  { id: 'scope', title: 'Scope', blurb: 'Waveform & X-Y', icon: 'scope' },
+  { id: 'soundscope', title: 'SoundScope', blurb: '1/48 oct + spectrograph', icon: 'waterfall' },
+  { id: 'logger', title: 'SPL Logger', blurb: 'Leq over time', icon: 'log' },
+  { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic' },
+  { id: 'ir', title: 'Impulse / RT60', blurb: 'ETC, T20, T30, C80', icon: 'impulse' },
+  { id: 'polarity', title: 'Polarity', blurb: '+ / − check', icon: 'polarity' },
+];
+
+export const SETTINGS_MODULES: InstrumentModule[] = [
+  { id: 'calibration', title: 'Calibration', blurb: 'Mic offset', icon: 'target', Screen: Calibration },
+];
