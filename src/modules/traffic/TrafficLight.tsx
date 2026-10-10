@@ -22,14 +22,14 @@ export function TrafficLight() {
   const [s, , patch] = usePersistentState('traffic', { metric: 'LAeq1' as Metric, limit: 85, margin: 3 });
   const [settings, setSettings] = useState(false);
   const [view, setView] = useState({ level: -Infinity, overS: 0, sessionLeq: -Infinity, elapsed: 0, fill: 0 });
-  const acc = useRef({ rolling: new RollingLeq(48000 * 60), energy: 0, samples: 0, overSamples: 0 });
+  const acc = useRef({ rolling: new RollingLeq(48000 * 60), energy: 0, samples: 0, overSamples: 0, fs: 0 });
   const sRef = useRef(s);
   sRef.current = s;
 
   const reset = () => {
     const fs = engine.status.sampleRate ?? 48000;
     const win = METRICS.find((m) => m.value === sRef.current.metric)!.window || 1;
-    acc.current = { rolling: new RollingLeq(fs * win), energy: 0, samples: 0, overSamples: 0 };
+    acc.current = { rolling: new RollingLeq(fs * win), energy: 0, samples: 0, overSamples: 0, fs };
   };
 
   useEffect(reset, [s.metric]);
@@ -37,6 +37,8 @@ export function TrafficLight() {
   useEffect(
     () =>
       engine.on('spl', ({ report }) => {
+        // the window was sized before the mic (and its sample rate) existed: resize once
+        if (acc.current.fs !== (engine.status.sampleRate ?? 48000)) reset();
         const a = acc.current;
         const st = sRef.current;
         const ch = report.channels.A;

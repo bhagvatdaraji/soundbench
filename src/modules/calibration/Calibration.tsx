@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useEngineStatus } from '../../audio/engine';
+import { engine, useEngineStatus } from '../../audio/engine';
+import { arrivalTime, measureImpulse, systemLatencyS } from '../../audio/impulse';
+import { Progress } from '../../components/Progress';
 import { MicGate } from '../../components/MicGate';
 import { ModuleScreen } from '../../components/ModuleScreen';
 import { Field, fmtDb, Readout } from '../../components/ui';
@@ -60,6 +62,8 @@ export function Calibration() {
             </div>
           </Field>
 
+          <LatencyField />
+
           <Field label="Input details" hint="If any processing shows ON, the browser is altering the mic signal and readings will be less accurate.">
             <dl className="cal-info num">
               <dt>Sample rate</dt>
@@ -102,4 +106,50 @@ function useStable(db: number): boolean {
     setStable(span > 1800 && hi - lo < 0.3);
   }, [db]);
   return stable;
+}
+
+/** Measures the speaker → mic round-trip latency with a short sweep (phone held at its own speaker). */
+function LatencyField() {
+  const cal = useCalibration();
+  const [busy, setBusy] = useState<{ p: number; label: string } | null>(null);
+  const [error, setError] = useState('');
+  const measure = async () => {
+    setError('');
+    setBusy({ p: 0, label: 'Get ready…' });
+    try {
+      const d = await measureImpulse({ sweepS: 1, level: -18, averages: 1, irS: 0.3, onProgress: (p, label) => setBusy({ p, label }) });
+      // arrivalTime() subtracts the current latency; we want the raw round trip
+      const raw = arrivalTime(d).seconds + d.latencyS;
+      setCalibration({ ...cal, latencyMs: +(raw * 1000).toFixed(2) });
+    } catch (e) {
+      setError((e as Error).message);
+    }
+    setBusy(null);
+  };
+  const current = systemLatencyS() * 1000;
+  return (
+    <Field
+      label={`Speaker → mic latency  ${current.toFixed(1)} ms`}
+      hint={
+        engine.loopback
+          ? 'Loopback test mode has no device latency.'
+          : cal.latencyMs != null
+            ? 'Measured. Delay finder and arrival times subtract this.'
+            : 'Estimated by the browser. For accurate delay and distance readings, hold the phone’s mic right at its own speaker (or loop an interface output to its input) and tap Measure.'
+      }
+    >
+      {busy && <Progress value={busy.p} label={busy.label} />}
+      <div className="cal-row">
+        <button className="btn" onClick={() => void measure()} disabled={!!busy || !!engine.loopback}>
+          Measure latency
+        </button>
+        {cal.latencyMs != null && (
+          <button className="btn ghost" onClick={() => setCalibration({ ...cal, latencyMs: null })}>
+            Use estimate
+          </button>
+        )}
+      </div>
+      {error && <p className="measure-error">{error}</p>}
+    </Field>
+  );
 }

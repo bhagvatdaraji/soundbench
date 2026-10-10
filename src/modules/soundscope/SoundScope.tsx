@@ -52,6 +52,13 @@ export function SoundScope() {
     history: null as HTMLCanvasElement | null,
     row: null as ImageData | null,
   });
+  // Bands depend on the sample rate, which is only known once the mic starts: resize to match.
+  if (st.current.bands.length !== centers.length) {
+    st.current.bands = new Float64Array(centers.length);
+    st.current.db = new Float64Array(centers.length).fill(-Infinity);
+    st.current.hold = new Float64Array(centers.length).fill(-Infinity);
+    st.current.history = null;
+  }
   const sRef = useRef(s);
   sRef.current = s;
   const runningRef = useRef(running);

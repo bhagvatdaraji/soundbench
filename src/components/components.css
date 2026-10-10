@@ -550,3 +550,6 @@
 .pol-label { font-size: var(--fs-lg); font-weight: 600; }
 .pol-conf { color: var(--text-dim); font-size: var(--fs-sm); }
 .pol-help { max-width: 440px; color: var(--text-dim); font-size: var(--fs-sm); line-height: 1.5; }
+.delay-mem { align-items: center; font-size: var(--fs-sm); color: var(--text-dim); }
+.delay-mem .chip { padding: 4px 10px; }
+.delay-diff { color: var(--live); }

@@ -231,4 +231,17 @@ test.describe('loopback measurements', () => {
     await expect(page.locator('.pol-badge')).toHaveAttribute('data-verdict', '−', { timeout: 15_000 });
     expect(errors).toEqual([]);
   });
+
+  test('transfer function: finds the 5 ms delay with high coherence', async ({ page }) => {
+    const errors = trackErrors(page);
+    await page.goto('./?loopback=direct#/transfer');
+    await startMic(page);
+    await page.getByRole('button', { name: 'Start' }).first().click();
+    await expect.poll(async () => num(await readout(page, 'Delay')), { timeout: 15_000 }).toBeCloseTo(5, 1);
+    await expect.poll(async () => num(await readout(page, 'Coherence')), { timeout: 10_000 }).toBeGreaterThan(0.9);
+    await expect.poll(async () => num(await readout(page, 'Averages'))).toBeGreaterThan(2);
+    await page.locator('.delay-mem').getByRole('button', { name: 'Store A' }).click();
+    await expect(page.locator('.delay-mem')).toContainText('A 5.0');
+    expect(errors).toEqual([]);
+  });
 });

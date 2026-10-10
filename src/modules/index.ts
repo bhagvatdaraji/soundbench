@@ -11,6 +11,7 @@ import { Logger } from './logger/Logger';
 import { Polarity } from './polarity/Polarity';
 import { Rta } from './rta/Rta';
 import { TrafficLight } from './traffic/TrafficLight';
+import { Transfer } from './transfer/Transfer';
 import { Saved } from './saved/Saved';
 import { Scope } from './scope/Scope';
 import { SoundScope } from './soundscope/SoundScope';
@@ -39,6 +40,7 @@ export const MODULES: InstrumentModule[] = [
   { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic', Screen: TrafficLight },
   { id: 'ir', title: 'Impulse / RT60', blurb: 'ETC, T20, T30, C80', icon: 'impulse', Screen: Impulse },
   { id: 'larsa', title: 'LARSA', blurb: 'Gated speaker response', icon: 'spectrum', Screen: Larsa },
+  { id: 'transfer', title: 'Transfer Function', blurb: 'Response, phase, delay', icon: 'scope', Screen: Transfer },
   { id: 'polarity', title: 'Polarity', blurb: '+ / − check', icon: 'polarity', Screen: Polarity },
 ];
 

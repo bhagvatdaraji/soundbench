@@ -63,7 +63,11 @@ export function Rta() {
     const off = engine.on('rta', (msg) => {
       if (msg.resolution !== s.resolution || !runningRef.current) return;
       const d = data.current;
-      if (d.fast.length !== msg.ms.length) resetData(msg.ms.length);
+      if (d.fast.length !== msg.ms.length) {
+        // first report after the mic started: use the real sample rate's band list
+        bands.current = makeBands(msg.resolution, engine.status.sampleRate ?? 48000);
+        resetData(msg.ms.length);
+      }
       const rate = engine.status.sampleRate ?? 48000;
       const dt = msg.samples / rate;
       const aF = 1 - Math.exp(-dt / TAU.F);
