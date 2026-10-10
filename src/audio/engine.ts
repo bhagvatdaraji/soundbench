@@ -2,12 +2,21 @@ import { useSyncExternalStore } from 'react';
 import type { BandResolution } from '../dsp/bands';
 import { DEFAULT_GENERATOR, type GeneratorParams } from '../dsp/generators';
 import { load, save } from '../store/persist';
+import { setActiveMic } from '../store/calibration';
 import { buildLoopback, loopbackMode, type LoopbackMode } from './loopback';
 import type { AnalyzerCommand, AnalyzerEvent, GeneratorCommand, GeneratorEvent } from './messages';
 import analyzerUrl from './worklets/analyzer.worklet.ts?worker&url';
 import generatorUrl from './worklets/generator.worklet.ts?worker&url';
 
 export type MicState = 'off' | 'starting' | 'on' | 'error';
+
+export interface AudioInput {
+  id: string;
+  label: string;
+}
+
+/** Which channel of a multi-channel input to measure; 'mix' averages them (the default). */
+export type InputChannel = 'mix' | 0 | 1;
 
 export interface EngineStatus {
   mic: MicState;
@@ -17,6 +26,19 @@ export interface EngineStatus {
   trackSettings: MediaTrackSettings | null;
   generatorRunning: boolean;
   generator: GeneratorParams;
+  /** Audio inputs the browser reports (names appear after mic permission). */
+  inputs: AudioInput[];
+  /** False until the browser reveals device names (i.e. before mic permission). */
+  inputsNamed: boolean;
+  /** Chosen input device, or null for the system default. */
+  inputId: string | null;
+  inputChannel: InputChannel;
+  /** Name of the input actually in use. */
+  inputLabel: string | null;
+  /** Channels the current input can deliver (1 if unknown). */
+  inputChannels: number;
+  /** Non-fatal notice, e.g. the saved input is no longer connected. */
+  notice: string | null;
 }
 
 type Listener<T> = (e: T) => void;
@@ -43,6 +65,8 @@ class AudioEngine {
   private stream: MediaStream | null = null;
   private source: AudioNode | null = null;
   private loopbackIn: AudioNode | null = null;
+  private splitter: AudioNode | null = null;
+  private stoppingOnPurpose = false;
   private wakeLock: { release(): Promise<void> } | null = null;
   private listeners: { [K in keyof EventMap]: Set<Listener<EventMap[K]>> } = {
     spl: new Set(),
@@ -62,9 +86,19 @@ class AudioEngine {
     trackSettings: null,
     generatorRunning: false,
     generator: load('generator', DEFAULT_GENERATOR),
+    inputs: [],
+    inputsNamed: false,
+    inputId: load<string | null>('inputId', null),
+    inputChannel: load<InputChannel>('inputChannel', 'mix'),
+    inputLabel: null,
+    inputChannels: 1,
+    notice: null,
   };
 
   constructor() {
+    navigator.mediaDevices?.addEventListener?.('devicechange', () => void this.refreshInputs());
+    // names are already visible if mic permission was granted earlier (lets the start card offer a choice)
+    void this.refreshInputs();
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         if (this.status.mic === 'on') void this.acquireWakeLock();
@@ -128,7 +162,7 @@ class AudioEngine {
 
   async startMic(): Promise<void> {
     if (this.status.mic === 'on' || this.status.mic === 'starting') return;
-    this.setStatus({ mic: 'starting', error: null });
+    this.setStatus({ mic: 'starting', error: null, notice: null });
     try {
       const ready = this.ensureContext();
       let stream: MediaStream | null = null;
@@ -136,20 +170,25 @@ class AudioEngine {
         if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) {
           throw new Error('Microphone needs HTTPS. Open the app from its https:// address.');
         }
-        stream = await navigator.mediaDevices.getUserMedia({
-          audio: {
-            echoCancellation: false,
-            noiseSuppression: false,
-            autoGainControl: false,
-            channelCount: 1,
-          },
-        });
+        stream = await this.openInput();
       }
       await ready;
       const ctx = this.ctx!;
       this.stream = stream;
-      if (stream) this.source = ctx.createMediaStreamSource(stream);
-      else {
+      if (stream) {
+        this.source = ctx.createMediaStreamSource(stream);
+        const ch = this.status.inputChannel;
+        const n = stream.getAudioTracks()[0]?.getSettings().channelCount ?? 1;
+        if (ch !== 'mix' && n > 1) {
+          // measure one input of a multi-channel interface instead of the average of all
+          const split = ctx.createChannelSplitter(n);
+          this.source.connect(split);
+          const pick = ctx.createGain();
+          split.connect(pick, Math.min(ch, n - 1));
+          this.splitter = split;
+          this.source = pick;
+        }
+      } else {
         const lb = buildLoopback(ctx, this.out!, this.loopback!);
         this.loopbackIn = lb.input;
         this.source = lb.output;
@@ -170,11 +209,22 @@ class AudioEngine {
       this.source.connect(this.analyzer).connect(mute).connect(ctx.destination);
       this.syncAnalyzer();
       await this.acquireWakeLock();
-      stream?.getAudioTracks()[0]?.addEventListener('ended', () => this.stopMic());
+      const track = stream?.getAudioTracks()[0];
+      track?.addEventListener('ended', () => {
+        if (this.stoppingOnPurpose) return;
+        this.stopMic();
+        this.setStatus({ notice: 'The microphone was disconnected. Tap Start microphone to continue.' });
+      });
+      const caps = (track?.getCapabilities?.() ?? {}) as MediaTrackCapabilities;
+      const label = track?.label || (this.loopback ? `Loopback (${this.loopback})` : 'Microphone');
+      setActiveMic(label);
       this.setStatus({
         mic: 'on',
-        trackSettings: stream?.getAudioTracks()[0]?.getSettings() ?? null,
+        trackSettings: track?.getSettings() ?? null,
+        inputLabel: label,
+        inputChannels: Math.max(track?.getSettings().channelCount ?? 1, caps.channelCount?.max ?? 1),
       });
+      void this.refreshInputs();
     } catch (err) {
       const e = err as Error & { name?: string };
       const message =
@@ -187,7 +237,11 @@ class AudioEngine {
   }
 
   stopMic(): void {
+    this.stoppingOnPurpose = true;
     this.stream?.getTracks().forEach((t) => t.stop());
+    this.stoppingOnPurpose = false;
+    this.splitter?.disconnect();
+    this.splitter = null;
     this.source?.disconnect();
     this.analyzer?.disconnect();
     if (this.loopbackIn) this.out?.disconnect(this.loopbackIn);
@@ -207,6 +261,95 @@ class AudioEngine {
     } catch {
       // Not supported or not allowed; the screen may dim during long measurements.
     }
+  }
+
+  /** Opens the chosen input; falls back to the system default if it's gone. */
+  private async openInput(): Promise<MediaStream> {
+    const audio = (deviceId: string | null): MediaTrackConstraints => ({
+      deviceId: deviceId ? { exact: deviceId } : undefined,
+      echoCancellation: false,
+      noiseSuppression: false,
+      autoGainControl: false,
+      // a specific channel needs all channels delivered; otherwise ask for mono as before
+      channelCount: this.status.inputChannel === 'mix' ? 1 : { ideal: 2 },
+    });
+    let id = this.status.inputId;
+    const wanted = load<string | null>('inputLabel', null);
+    if (!id) return navigator.mediaDevices.getUserMedia({ audio: audio(null) });
+
+    // Browsers may hand out new device ids between sessions: find the device by name if so.
+    const findByName = async () => {
+      const list = await navigator.mediaDevices.enumerateDevices().catch(() => [] as MediaDeviceInfo[]);
+      return list.find((d) => d.kind === 'audioinput' && d.label && d.label === wanted)?.deviceId ?? null;
+    };
+    const remember = (newId: string) => {
+      id = newId;
+      save('inputId', newId);
+      this.setStatus({ inputId: newId });
+    };
+    if (wanted) {
+      const byName = await findByName();
+      if (byName && byName !== id) remember(byName);
+    }
+    try {
+      return await navigator.mediaDevices.getUserMedia({ audio: audio(id) });
+    } catch (e) {
+      const name = (e as Error).name;
+      if (name !== 'OverconstrainedError' && name !== 'NotFoundError' && name !== 'NotReadableError') throw e;
+      // Names are only visible once permission is granted: open the default, then look again.
+      const fallback = await navigator.mediaDevices.getUserMedia({ audio: audio(null) });
+      const byName = wanted ? await findByName() : null;
+      if (byName) {
+        fallback.getTracks().forEach((t) => t.stop());
+        remember(byName);
+        return navigator.mediaDevices.getUserMedia({ audio: audio(byName) });
+      }
+      this.setStatus({ notice: 'The chosen microphone isn’t connected; using the default one.' });
+      return fallback;
+    }
+  }
+
+  /** Re-reads the list of audio inputs (on start and whenever devices are plugged in or out). */
+  async refreshInputs(): Promise<void> {
+    if (this.loopback || !navigator.mediaDevices?.enumerateDevices) return;
+    try {
+      const all = await navigator.mediaDevices.enumerateDevices();
+      const devs = all.filter((d) => d.kind === 'audioinput' && d.deviceId && d.deviceId !== 'default' && d.deviceId !== 'communications');
+      const inputs = devs.map((d, i) => ({ id: d.deviceId, label: d.label || `Microphone ${i + 1}` }));
+      // keep the saved choice when the browser has given the device a new id
+      let inputId = this.status.inputId;
+      const wanted = load<string | null>('inputLabel', null);
+      if (inputId && wanted && !inputs.some((i) => i.id === inputId)) {
+        const byName = devs.find((d) => d.label === wanted);
+        if (byName) {
+          inputId = byName.deviceId;
+          save('inputId', inputId);
+        }
+      }
+      this.setStatus({ inputs, inputId, inputsNamed: devs.length > 0 && devs.every((d) => d.label) });
+    } catch {
+      // not supported; the picker just stays hidden
+    }
+  }
+
+  /** Switches to another input (null = system default); restarts the mic if it's running. */
+  async setInput(id: string | null): Promise<void> {
+    save('inputId', id);
+    save('inputLabel', id ? this.status.inputs.find((i) => i.id === id)?.label ?? null : null);
+    this.setStatus({ inputId: id, notice: null });
+    await this.restartMic();
+  }
+
+  async setInputChannel(ch: InputChannel): Promise<void> {
+    save('inputChannel', ch);
+    this.setStatus({ inputChannel: ch });
+    await this.restartMic();
+  }
+
+  private async restartMic() {
+    if (this.status.mic !== 'on') return;
+    this.stopMic();
+    await this.startMic();
   }
 
   /** Register interest in the RTA filter bank; returns an unsubscribe. */

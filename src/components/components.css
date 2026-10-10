@@ -630,3 +630,18 @@
 .faq-group h4, .about section > h4 { margin: 16px 0 4px; font-size: var(--fs-sm); color: var(--text); }
 .faq-title { margin-top: 26px !important; }
 .help-more { margin-top: 14px; padding: 10px 0; color: var(--accent); font-weight: 600; }
+
+/* ---------- Input picker ---------- */
+.input-picker { display: flex; flex-direction: column; gap: 8px; }
+.input-select {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: var(--fs-md);
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.input-picker.compact { width: min(320px, 100%); }
+.input-picker.compact .input-select { font-size: var(--fs-sm); padding: 8px 10px; color: var(--text-dim); }
+.mic-notice { margin: 0; color: var(--warn); font-size: var(--fs-sm); }

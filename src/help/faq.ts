@@ -46,7 +46,7 @@ export const FAQ: FaqItem[] = [
     id: 'uncalibrated',
     group: 'accuracy',
     q: 'What does “Uncalibrated” mean?',
-    a: 'Levels are only a rough guess until you calibrate. Go to Setup › Calibration, play a known level (a 94 dB calibrator, or steady noise next to a meter you trust), type the true value and tap Set.',
+    a: 'Levels are only a rough guess until you calibrate. Go to Setup › Mic & Calibration, play a known level (a 94 dB calibrator, or steady noise next to a meter you trust), type the true value and tap Set.',
     modules: LEVEL,
   },
   {
@@ -57,10 +57,24 @@ export const FAQ: FaqItem[] = [
     modules: [...LEVEL, 'ir', 'larsa', 'transfer'],
   },
   {
+    id: 'external-mic',
+    group: 'accuracy',
+    q: 'Can I use an external mic or audio interface?',
+    a: 'Yes. Plug it in, then choose it in Setup › Mic & Calibration (or on the Start microphone card). With an interface, pick the input your mic is on. Calibrate each mic once; the app remembers it per mic.',
+    modules: [...LEVEL, 'ir', 'larsa', 'transfer', 'distortion', 'stipa'],
+  },
+  {
+    id: 'mic-not-listed',
+    group: 'accuracy',
+    q: 'My external mic isn’t listed or isn’t used.',
+    a: 'Unplug it, plug it back in, then stop and start the microphone. On iPhone the system often switches to a plugged-in mic by itself and may list just one input. Avoid Bluetooth headsets for measuring.',
+    modules: ['calibration'],
+  },
+  {
     id: 'latency',
     group: 'accuracy',
     q: 'Delay or distance readings look wrong.',
-    a: 'Every phone adds a little delay of its own. Go to Setup › Calibration › Measure latency with the mic held right at the phone’s speaker. Do it once.',
+    a: 'Every phone adds a little delay of its own. Go to Setup › Mic & Calibration › Measure latency with the mic held right at the phone’s speaker. Do it once.',
     modules: ['transfer', 'larsa', 'ir', 'calibration'],
   },
   {

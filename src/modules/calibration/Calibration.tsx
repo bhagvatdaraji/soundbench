@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { engine, useEngineStatus } from '../../audio/engine';
 import { arrivalTime, measureImpulse, systemLatencyS } from '../../audio/impulse';
 import { Progress } from '../../components/Progress';
+import { InputPicker } from '../../components/InputPicker';
 import { MicGate } from '../../components/MicGate';
 import { ModuleScreen } from '../../components/ModuleScreen';
 import { Field, fmtDb, Readout } from '../../components/ui';
@@ -29,9 +30,18 @@ export function Calibration() {
   const flag = (v: unknown) => (v === undefined ? 'not reported' : v ? 'ON ⚠︎' : 'off');
 
   return (
-    <ModuleScreen title="Calibration" showCalBadge={false}>
+    <ModuleScreen title="Mic & Calibration" showCalBadge={false}>
       <MicGate>
         <div className="cal">
+          {!engine.loopback && (
+            <Field
+              label="Microphone"
+              hint="Plug in a USB mic or audio interface and choose it here. Each microphone keeps its own calibration. With an interface, pick the input your mic is plugged into."
+            >
+              <InputPicker />
+              {status.notice && <p className="mic-notice">{status.notice}</p>}
+            </Field>
+          )}
           <div className="cal-live">
             <Readout label="Input (Z, Slow)" value={fmtDb(dbfs)} unit="dBFS" />
             <Readout label="Reads as" value={fmtDb(spl)} unit="dB SPL" tone="live" size="lg" />
@@ -50,7 +60,7 @@ export function Calibration() {
             </div>
           </Field>
 
-          <Field label={`Offset  ${cal.offsetDb.toFixed(1)} dB`} hint={cal.calibratedAt ? `Calibrated ${new Date(cal.calibratedAt).toLocaleString()}` : 'Not calibrated yet. Using a rough default for iPhone mics.'}>
+          <Field label={`Offset  ${cal.offsetDb.toFixed(1)} dB`} hint={cal.calibratedAt ? `Calibrated ${new Date(cal.calibratedAt).toLocaleString()} for ${status.inputLabel ?? 'this microphone'}.` : `${status.inputLabel ?? 'This microphone'} isn’t calibrated yet. Using a rough default.`}>
             <div className="cal-row">
               <button className="btn" onClick={() => nudge(-1)}>−1</button>
               <button className="btn" onClick={() => nudge(-0.1)}>−0.1</button>

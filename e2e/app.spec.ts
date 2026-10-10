@@ -291,3 +291,34 @@ test('FAQ: questions collapsed, answers on tap; "?" shows steps for an instrumen
   await expect(sheet).toHaveCount(0);
   expect(errors).toEqual([]);
 });
+
+test('switch microphone input; each mic keeps its own calibration', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('./#/calibration');
+  await startMic(page);
+  const picker = page.getByLabel('Microphone input');
+  await expect(picker.locator('option')).toHaveCount(3); // default + Fake Audio Input 1 + 2
+  await picker.selectOption({ label: 'Fake Audio Input 1' });
+  await expect(page.locator('.mic-gate')).toHaveCount(0);
+  const set = page.getByRole('button', { name: 'Set', exact: true });
+  await expect(set).toBeEnabled({ timeout: 15_000 });
+  await set.click();
+  await expect.poll(async () => num(await readout(page, 'Reads as'))).toBeCloseTo(94, 0);
+
+  // a different mic starts uncalibrated…
+  await picker.selectOption({ label: 'Fake Audio Input 2' });
+  await expect.poll(async () => num(await readout(page, 'Reads as')), { timeout: 10_000 }).toBeCloseTo(100, 0);
+  await expect(page.getByText(/isn’t calibrated yet/)).toBeVisible();
+
+  // …and switching back restores the first mic's calibration
+  await picker.selectOption({ label: 'Fake Audio Input 1' });
+  await expect.poll(async () => num(await readout(page, 'Reads as')), { timeout: 10_000 }).toBeCloseTo(94, 0);
+  await expect(page.getByText(/Calibrated .* for Fake Audio Input 1/)).toBeVisible();
+
+  // the choice is remembered after a reload (device ids change between sessions; the name is used)
+  await page.goto('./#/spl');
+  await page.reload();
+  await startMic(page);
+  await expect.poll(async () => num(await page.locator('.spl-big-value').innerText()), { timeout: 10_000 }).toBeCloseTo(94, 0);
+  expect(errors).toEqual([]);
+});

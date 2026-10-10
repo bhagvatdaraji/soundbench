@@ -29,7 +29,7 @@ Home Screen (PWA). No App Store, Xcode or Developer Mode needed.
 
 **Generate**: sine, square, triangle, pink/white noise, log sweep, Polarity and STIPA test signals.
 
-**Setup**: Calibration (mic offset and speaker→mic latency), Saved measurements (CSV / image / WAV export through the share sheet), About & help with an FAQ.
+**Setup**: Mic & Calibration (input device and channel, per-mic level offset, speaker→mic latency), Saved measurements (CSV / image / WAV export through the share sheet), About & help with an FAQ.
 
 Every instrument has a small ⓘ button with three quick steps and the questions that apply to it. Help text lives in `src/help/`.
 
@@ -38,7 +38,7 @@ Every instrument has a small ⓘ button with three quick steps and the questions
 1. Open the link above in **Safari**.
 2. Share → **Add to Home Screen**.
 3. Open it from the Home Screen, pick an instrument, tap **Start microphone**, and allow mic access.
-4. Go to **Setup › Calibration** once: set the level against a calibrator or a meter you trust, and measure the latency if you'll use delay or distance readings.
+4. Go to **Setup › Mic & Calibration** once: pick your microphone (built-in, USB mic or interface input), set the level against a calibrator or a meter you trust, and measure the latency if you'll use delay or distance readings. Each microphone keeps its own calibration.
 
 Every push to `main` is tested and redeployed automatically. Reopen the app to get the new version.
 

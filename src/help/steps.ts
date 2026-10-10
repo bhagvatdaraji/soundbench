@@ -15,6 +15,6 @@ export const STEPS: Record<string, string[]> = {
   polarity: ['Connect the phone to the speaker under test.', 'Hold the mic near it and tap Test.', 'All speakers should show the same sign.'],
   stipa: ['Play the STIPA signal through the system.', 'Place the phone at a listener position and tap Measure.', 'Keep still and quiet until it finishes.'],
   generator: ['Pick a waveform and level (start low).', 'Tap Play.', 'The sine button in other instruments starts and stops it too.'],
-  calibration: ['Play a known level near the mic.', 'Type the true level and tap Set when the reading is steady.', 'Optional: Measure latency with the mic at the phone’s speaker.'],
+  calibration: ['Choose your microphone (and its input, on an interface).', 'Play a known level, type the true value and tap Set when steady.', 'Optional: Measure latency with the mic at the speaker.'],
   saved: ['Use Save in an instrument to keep a measurement.', 'Tap the share icon to export it.'],
 };
