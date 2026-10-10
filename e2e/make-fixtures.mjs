@@ -1,4 +1,5 @@
-// Writes e2e/fixtures/tone1k.wav: 1 kHz sine at −20 dBFS (AES17), 48 kHz mono 16-bit, 5 s.
+// Writes e2e/fixtures/tone1k.wav: 1 kHz sine at −20 dBFS (AES17), 48 kHz mono 16-bit, 30 s.
+// Long enough that Chrome's loop point (which clicks after resampling) stays out of the tests.
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -6,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const dir = join(dirname(fileURLToPath(import.meta.url)), 'fixtures');
 mkdirSync(dir, { recursive: true });
 const fs = 48000;
-const n = fs * 5;
+const n = fs * 30;
 const amp = 10 ** (-20 / 20);
 const data = Buffer.alloc(n * 2);
 for (let i = 0; i < n; i++) data.writeInt16LE(Math.round(32767 * amp * Math.sin((2 * Math.PI * 1000 * i) / fs)), i * 2);

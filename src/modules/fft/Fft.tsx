@@ -2,7 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { engine } from '../../audio/engine';
 import { readLatest, useCaptureRing } from '../../audio/useCaptureRing';
 import { GraphCanvas } from '../../components/GraphCanvas';
-import { drawGrid, freqOfX, plotRect, xOfFreq, yOfDb, type Plot } from '../../components/graph';
+import { drawCurve, drawGrid, freqOfX, plotRect, xOfFreq, yOfDb, type Plot } from '../../components/graph';
+import { MeasurementSheet, useReferenceCurve, type Snapshot } from '../../components/MeasurementSheet';
+import { fractionalCenters, groupFractional } from '../../dsp/fractionalBands';
 import { MicGate } from '../../components/MicGate';
 import { ModuleScreen } from '../../components/ModuleScreen';
 import { Field, fmtDb, Readout, Segmented, Sheet, ToolButton } from '../../components/ui';
@@ -31,7 +33,11 @@ export function Fft() {
     pinkTilt: false,
     dbMax: 110,
     dbSpan: 100,
+    refId: null as string | null,
   });
+  const [saveOpen, setSaveOpen] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ref = useReferenceCurve('fft', s.refId);
   const [running, setRunning] = useState(true);
   const [settings, setSettings] = useState(false);
   const [cursorHz, setCursorHz] = useState<number | null>(null);
@@ -84,21 +90,46 @@ export function Fft() {
     sp.fresh = false;
     for (let k = 0; k < sp.power.length; k++) sp.avg[k] = a * sp.avg[k] + (1 - a) * sp.power[k];
     smoothOctave(sp.avg, binHz, st.smoothing, sp.smooth);
-    let peakK = 1;
     const kMin = Math.max(1, Math.floor(20 / binHz));
-    const kMax = Math.min(sp.smooth.length - 2, Math.ceil(20000 / binHz));
+    const kMax = Math.min(sp.avg.length - 2, Math.ceil(20000 / binHz));
+    let peakK = kMin;
     for (let k = 0; k < sp.smooth.length; k++) {
       if (sp.smooth[k] > sp.max[k]) sp.max[k] = sp.smooth[k];
       sp.db[k] = binDb(sp.smooth[k], k);
-      if (k >= kMin && k <= kMax && sp.smooth[k] > sp.smooth[peakK]) peakK = k;
+      // Peak comes from the unsmoothed spectrum so smoothing can't shift or lower it.
+      if (k >= kMin && k <= kMax && sp.avg[k] > sp.avg[peakK]) peakK = k;
     }
-    const { offset, level } = interpolatePeak(sp.db, peakK);
+    const off = getCalibration().offsetDb;
+    const around = [sp.avg[peakK - 1], sp.avg[peakK], sp.avg[peakK + 1]].map((p) => msToDbfs(p) + off);
+    const { offset, level } = interpolatePeak(around, 1);
     const c = cursorRef.current;
     setRead({
       peakHz: (peakK + offset) * binHz,
       peakDb: level,
       cursorDb: c == null ? -Infinity : sp.db[Math.round(c / binHz)] ?? -Infinity,
     });
+  };
+
+  /** Saved spectra are reduced to 1/48-octave points: plenty of detail, small files. */
+  const snapshot = (): Snapshot | null => {
+    const sp = spec.current;
+    if (sp.fresh || sp.size !== s.size) return null;
+    const centers = fractionalCenters(48, 20, Math.min(20000, fs / 2));
+    const toDb = (p: number, f: number) => msToDbfs(p) + getCalibration().offsetDb + (s.pinkTilt ? 10 * Math.log10(f / 1000) : 0);
+    const lv = groupFractional(sp.smooth, binHz, centers, 48);
+    const mx = groupFractional(sp.max, binHz, centers, 48);
+    const freqs = Array.from(centers, (f) => +f.toFixed(2));
+    return {
+      data: {
+        kind: 'curve',
+        unit: s.pinkTilt ? 'dB_pinkflat' : 'dB',
+        freqs,
+        levels: Array.from(lv, (p, i) => +toDb(p, centers[i]).toFixed(2)),
+        max: s.maxHold ? Array.from(mx, (p, i) => +toDb(p, centers[i]).toFixed(2)) : undefined,
+      },
+      settings: { size: s.size, window: s.window, smoothing: s.smoothing, averaging: s.averaging, pinkTilt: s.pinkTilt, offsetDb: getCalibration().offsetDb },
+      lines: [`${s.size} pt · ${WINDOW_LABELS[s.window]} · ${s.smoothing ? `1/${s.smoothing} oct` : 'raw'}`, `Peak ${formatFreq(read.peakHz)} at ${fmtDb(read.peakDb)} dB`],
+    };
   };
 
   const plotFor = (w: number, h: number): Plot =>
@@ -153,6 +184,7 @@ export function Fft() {
     ctx.rect(p.x, p.y, p.w, p.h);
     ctx.clip();
     ctx.lineJoin = 'round';
+    if (ref) drawCurve(ctx, p, ref.freqs, ref.levels, t.secondary, 1.5);
     if (s.maxHold) {
       ctx.strokeStyle = t.maxHold;
       ctx.lineWidth = 1;
@@ -202,6 +234,7 @@ export function Fft() {
           <ToolButton icon={running ? 'pause' : 'play'} label={running ? 'Freeze' : 'Run'} onClick={() => setRunning(!running)} active={!running} />
           <ToolButton icon="hold" label="Max hold" onClick={() => patch({ maxHold: !s.maxHold })} active={s.maxHold} />
           <ToolButton icon="reset" label="Reset" onClick={() => resetSpectrum()} />
+          <ToolButton icon="folder" label="Save" onClick={() => setSaveOpen(true)} />
           <GeneratorToolButton />
           <ToolButton icon="settings" label="Settings" onClick={() => setSettings(true)} />
         </>
@@ -216,9 +249,18 @@ export function Fft() {
             <Readout size="sm" label="Level" value={fmtDb(read.cursorDb)} />
             <Readout size="sm" label="Resolution" value={`${binHz.toFixed(2)} Hz`} tone="dim" />
           </div>
-          <GraphCanvas draw={draw} onPointer={onPointer} />
+          <GraphCanvas draw={draw} onPointer={onPointer} canvasRef={canvasRef} />
         </div>
       </MicGate>
+      <MeasurementSheet
+        open={saveOpen}
+        onClose={() => setSaveOpen(false)}
+        module="fft"
+        title="FFT"
+        snapshot={snapshot}
+        canvas={canvasRef}
+        reference={{ id: s.refId, set: (refId) => patch({ refId }) }}
+      />
       <Sheet open={settings} title="FFT settings" onClose={() => setSettings(false)}>
         <Field label="Window" hint="Hann is a good default. Flat-top reads tone levels most accurately.">
           <Segmented options={(Object.keys(WINDOW_LABELS) as WindowType[]).map((w) => ({ value: w, label: WINDOW_LABELS[w] }))} value={s.window} onChange={(window) => patch({ window })} />

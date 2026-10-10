@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { engine } from '../../audio/engine';
 import { GraphCanvas } from '../../components/GraphCanvas';
-import { drawGrid, plotRect, xOfFreq, yOfDb, type Plot } from '../../components/graph';
+import { drawCurve, drawGrid, plotRect, xOfFreq, yOfDb, type Plot } from '../../components/graph';
+import { MeasurementSheet, useReferenceCurve, type Snapshot } from '../../components/MeasurementSheet';
 import { MicGate } from '../../components/MicGate';
 import { ModuleScreen } from '../../components/ModuleScreen';
 import { Field, fmtDb, Readout, Segmented, Sheet, ToolButton } from '../../components/ui';
@@ -23,7 +24,11 @@ export function Rta() {
     maxHold: true,
     dbMax: 110,
     dbSpan: 80,
+    refId: null as string | null,
   });
+  const [saveOpen, setSaveOpen] = useState(false);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const ref = useReferenceCurve('rta', s.refId);
   const [running, setRunning] = useState(true);
   const [settings, setSettings] = useState(false);
   const [cursor, setCursor] = useState<number | null>(null);
@@ -108,6 +113,25 @@ export function Rta() {
   }
 
   const reset = () => resetData(bands.current.length);
+
+  const snapshot = (): Snapshot | null => {
+    const d = data.current;
+    if (!d.fast.length || (!d.samples && !d.fast.some((v) => v > 0))) return null;
+    const avg = currentMs();
+    const bs = bands.current;
+    const unit = s.weighting === 'Z' ? 'dB' : `dB${s.weighting}`;
+    return {
+      data: {
+        kind: 'curve',
+        unit,
+        freqs: bs.map((b) => b.nominal),
+        levels: bs.map((_, i) => +levelOf(avg[i], i).toFixed(2)),
+        max: bs.map((_, i) => +levelOf(d.max[i], i).toFixed(2)),
+      },
+      settings: { resolution: s.resolution, averaging: s.averaging, weighting: s.weighting, offsetDb: getCalibration().offsetDb },
+      lines: [`${s.resolution === 3 ? '1/3' : '1/1'} octave · ${s.averaging} · ${unit}`, `Total ${fmtDb(readout.total)} ${unit}`],
+    };
+  };
   const plotFor = (w: number, h: number): Plot =>
     plotRect(w, h, { fMin: 14, fMax: 28000, dbMin: s.dbMax - s.dbSpan, dbMax: s.dbMax });
 
@@ -141,6 +165,7 @@ export function Rta() {
         }
       }
     }
+    if (ref) drawCurve(ctx, p, ref.freqs, ref.levels, t.secondary, 2);
   };
 
   const onPointer = (pos: { x: number; w: number; h: number } | null) => {
@@ -175,6 +200,7 @@ export function Rta() {
         <>
           <ToolButton icon={running ? 'pause' : 'play'} label={running ? 'Freeze' : 'Run'} onClick={() => setRunning(!running)} active={!running} />
           <ToolButton icon="reset" label="Reset" onClick={reset} />
+          <ToolButton icon="folder" label="Save" onClick={() => setSaveOpen(true)} />
           <GeneratorToolButton />
           <ToolButton icon="settings" label="Settings" onClick={() => setSettings(true)} />
         </>
@@ -188,9 +214,18 @@ export function Rta() {
             <Readout size="sm" label="Level" value={fmtDb(readout.band)} />
             <Readout size="sm" label="Max" value={fmtDb(readout.bandMax)} tone="max" />
           </div>
-          <GraphCanvas draw={draw} onPointer={onPointer} />
+          <GraphCanvas draw={draw} onPointer={onPointer} canvasRef={canvasRef} />
         </div>
       </MicGate>
+      <MeasurementSheet
+        open={saveOpen}
+        onClose={() => setSaveOpen(false)}
+        module="rta"
+        title="RTA"
+        snapshot={snapshot}
+        canvas={canvasRef}
+        reference={{ id: s.refId, set: (refId) => patch({ refId }) }}
+      />
       <Sheet open={settings} title="RTA settings" onClose={() => setSettings(false)}>
         <Field label="Weighting" hint="Applied per band at its centre frequency.">
           <Segmented options={['Z', 'A', 'C'] as const} value={s.weighting} onChange={(weighting) => patch({ weighting })} />

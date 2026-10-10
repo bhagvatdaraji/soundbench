@@ -71,3 +71,38 @@ export function drawGrid(ctx: CanvasRenderingContext2D, p: Plot, dbStep = 10, un
   ctx.fillText(unit, 4, 2);
   ctx.restore();
 }
+
+/** Polyline through (frequency, dB) points, e.g. a saved reference trace. */
+export function drawCurve(
+  ctx: CanvasRenderingContext2D,
+  p: Plot,
+  freqs: ArrayLike<number>,
+  levels: ArrayLike<number>,
+  color: string,
+  width = 1.5,
+): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(p.x, p.y, p.w, p.h);
+  ctx.clip();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  let pen = false;
+  for (let i = 0; i < freqs.length; i++) {
+    const f = freqs[i];
+    const l = levels[i];
+    if (!Number.isFinite(l) || f < p.fMin || f > p.fMax) {
+      pen = false;
+      continue;
+    }
+    const x = xOfFreq(p, f);
+    const y = Math.min(p.y + p.h + 2, Math.max(p.y - 2, yOfDb(p, l)));
+    if (pen) ctx.lineTo(x, y);
+    else ctx.moveTo(x, y);
+    pen = true;
+  }
+  ctx.stroke();
+  ctx.restore();
+}

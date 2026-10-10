@@ -44,6 +44,10 @@ test('FFT finds the 1 kHz peak', async ({ page }) => {
   await startMic(page);
   await expect.poll(async () => await readout(page, /^Peak$/), { timeout: 10_000 }).toBe('1.000 kHz');
   await expect.poll(async () => num(await readout(page, 'Peak level'))).toBeCloseTo(100, 0);
+  // Smoothing changes the trace, not the peak readout.
+  await page.getByRole('radio', { name: '1/6' }).click();
+  await page.waitForTimeout(500);
+  expect(await readout(page, /^Peak$/)).toBe('1.000 kHz');
   expect(errors).toEqual([]);
 });
 
@@ -79,5 +83,32 @@ test('scope triggers on the tone and reads its frequency', async ({ page }) => {
   await expect.poll(async () => await readout(page, 'Trigger'), { timeout: 10_000 }).toBe('trig’d');
   await expect.poll(async () => num(await readout(page, 'Freq'))).toBeCloseTo(1, 2); // "1.000 kHz"
   expect(num(await readout(page, 'RMS'))).toBeCloseTo(-20, 0);
+  expect(errors).toEqual([]);
+});
+
+test('save an RTA snapshot, use it as reference, export CSV, and find it after reload', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('./#/rta');
+  await startMic(page);
+  await expect.poll(async () => num(await readout(page, 'Total')), { timeout: 10_000 }).toBeCloseTo(100, 0);
+  await page.getByRole('button', { name: 'Save' }).click();
+  await page.getByLabel('Measurement name').fill('Living room');
+  await page.getByRole('button', { name: 'Save snapshot' }).click();
+  await expect(page.getByRole('status')).toContainText('Living room');
+  await page.getByRole('radio', { name: 'Living room' }).click();
+  await expect(page.getByRole('radio', { name: 'Living room' })).toHaveAttribute('aria-checked', 'true');
+
+  const download = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export CSV' }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/\.csv$/);
+  const csv = await (await file.createReadStream())!.toArray();
+  const text = Buffer.concat(csv).toString();
+  expect(text).toContain('frequency_hz,level_dB,max_dB');
+  expect(text).toMatch(/\n1000,(99|100)\./);
+
+  await page.goto('./#/saved');
+  await page.reload();
+  await expect(page.locator('.saved-item', { hasText: 'Living room' })).toBeVisible();
   expect(errors).toEqual([]);
 });

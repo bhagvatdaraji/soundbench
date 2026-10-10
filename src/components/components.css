@@ -375,3 +375,49 @@
 }
 .cal-info dt { color: var(--text-dim); }
 .cal-info dd { margin: 0; }
+
+/* ---------- Save & export ---------- */
+.text-input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.sheet-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 8px; }
+.sheet-status { margin: 4px 0 0; font-size: var(--fs-sm); color: var(--live); }
+.ref-list { display: flex; flex-direction: column; gap: 6px; }
+.ref-item {
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+}
+.ref-item.on { border-color: var(--secondary); color: var(--text); }
+
+/* ---------- Saved list ---------- */
+.saved { max-width: 640px; margin: 0 auto; padding: 16px; }
+.saved-empty { color: var(--text-dim); text-align: center; margin-top: 40px; line-height: 1.5; }
+.saved-item {
+  display: grid;
+  grid-template-columns: 96px 1fr;
+  gap: 12px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.saved-thumb {
+  width: 96px;
+  height: 60px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.saved-name { font-weight: 600; word-break: break-word; }
+.saved-meta { font-size: var(--fs-xs); color: var(--text-dim); margin: 2px 0 8px; }
+.saved-actions { display: flex; gap: 4px; }
+.saved-actions .icon-btn { width: 36px; height: 36px; margin: 0; color: var(--text-dim); }

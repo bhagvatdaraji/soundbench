@@ -1,4 +1,4 @@
-import { useEffect, useRef, type PointerEvent } from 'react';
+import { useEffect, useRef, type MutableRefObject, type PointerEvent } from 'react';
 
 /**
  * A full-size canvas that calls `draw` every animation frame with a DPR-scaled context.
@@ -8,13 +8,16 @@ export function GraphCanvas({
   draw,
   onPointer,
   className,
+  canvasRef,
 }: {
   draw: (ctx: CanvasRenderingContext2D, w: number, h: number) => void;
   /** Pointer position in CSS px (null on release). */
   onPointer?: (pos: { x: number; y: number; w: number; h: number } | null) => void;
   className?: string;
+  /** Receives the canvas element, e.g. for PNG export. */
+  canvasRef?: MutableRefObject<HTMLCanvasElement | null>;
 }) {
-  const ref = useRef<HTMLCanvasElement>(null);
+  const ref = useRef<HTMLCanvasElement | null>(null);
   const drawRef = useRef(draw);
   drawRef.current = draw;
 
@@ -57,7 +60,10 @@ export function GraphCanvas({
 
   return (
     <canvas
-      ref={ref}
+      ref={(el) => {
+        ref.current = el;
+        if (canvasRef) canvasRef.current = el;
+      }}
       className={className ?? 'graph'}
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);

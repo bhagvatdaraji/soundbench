@@ -22,6 +22,10 @@ const PATHS = {
   peak: 'M12 4v16M8 8l4-4 4 4',
   hold: 'M3 6h3M9 6h3M15 6h3M21 6h0M3 19c3 0 4-8 9-8s6 8 9 8',
   close: 'M6 6l12 12M18 6L6 18',
+  folder: 'M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z',
+  share: 'M12 3v12M8 7l4-4 4 4M5 12v7h14v-7',
+  trash: 'M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13',
+  edit: 'M4 20h4L19 9l-4-4L4 16zM14 6l4 4',
 } as const;
 
 export type IconName = keyof typeof PATHS;

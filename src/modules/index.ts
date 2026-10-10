@@ -4,6 +4,7 @@ import { Calibration } from './calibration/Calibration';
 import { Fft } from './fft/Fft';
 import { Generator } from './generator/Generator';
 import { Rta } from './rta/Rta';
+import { Saved } from './saved/Saved';
 import { Scope } from './scope/Scope';
 import { SplMeter } from './spl/SplMeter';
 
@@ -32,4 +33,5 @@ export const MODULES: InstrumentModule[] = [
 
 export const SETTINGS_MODULES: InstrumentModule[] = [
   { id: 'calibration', title: 'Calibration', blurb: 'Mic offset', icon: 'target', Screen: Calibration },
+  { id: 'saved', title: 'Saved', blurb: 'Measurements & export', icon: 'folder', Screen: Saved },
 ];

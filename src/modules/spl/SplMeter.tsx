@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { AnalogDial } from '../../components/AnalogDial';
+import { MeasurementSheet, type Snapshot } from '../../components/MeasurementSheet';
 import { MicGate } from '../../components/MicGate';
 import { ModuleScreen } from '../../components/ModuleScreen';
 import { Field, fmtDb, Readout, Segmented, Sheet, ToolButton } from '../../components/ui';
@@ -21,6 +22,7 @@ export function SplMeter() {
   });
   const [autoMin, setAutoMin] = useState(30);
   const [settings, setSettings] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
   const { stats, reset } = useSpl();
   const key = `${s.weighting}${s.time}` as const;
   const level = stats.now[key];
@@ -33,6 +35,23 @@ export function SplMeter() {
   }, [level, s.range, autoMin]);
   const min = s.range === 'auto' ? autoMin : s.range;
   const max = min + 60;
+  const snapshot = (): Snapshot | null => {
+    if (!stats.elapsed) return null;
+    const rows: (string | number)[][] = [];
+    for (const w of ['A', 'C', 'Z'] as const) {
+      rows.push([`L${w}eq`, +stats.leq[w].toFixed(1)], [`L${w}peak`, +stats.peak[w].toFixed(1)]);
+      for (const t of ['F', 'S', 'I'] as const) {
+        const k = `${w}${t}` as const;
+        rows.push([`L${w}${t}max`, +stats.max[k].toFixed(1)], [`L${w}${t}min`, +stats.min[k].toFixed(1)]);
+      }
+    }
+    rows.push(['duration_s', +stats.elapsed.toFixed(1)]);
+    return {
+      data: { kind: 'table', columns: ['metric', 'dB'], rows },
+      settings: { weighting: s.weighting, time: s.time },
+      lines: [],
+    };
+  };
   const unit = s.weighting === 'Z' ? 'dB(Z)' : `dB(${s.weighting})`;
 
   return (
@@ -52,6 +71,7 @@ export function SplMeter() {
       tools={
         <>
           <ToolButton icon="reset" label="Reset" onClick={reset} />
+          <ToolButton icon="folder" label="Save" onClick={() => setSaveOpen(true)} />
           <GeneratorToolButton />
           <ToolButton icon="settings" label="Settings" onClick={() => setSettings(true)} />
         </>
@@ -78,6 +98,7 @@ export function SplMeter() {
           </div>
         </div>
       </MicGate>
+      <MeasurementSheet open={saveOpen} onClose={() => setSaveOpen(false)} module="spl" title="SPL" snapshot={snapshot} />
       <Sheet open={settings} title="SPL Meter settings" onClose={() => setSettings(false)}>
         <Field label="Meter range" hint="Auto picks a 60 dB window around the current level.">
           <Segmented
