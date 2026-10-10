@@ -121,3 +121,32 @@ test('SoundScope finds the 1 kHz peak', async ({ page }) => {
   await expect.poll(async () => num(await readout(page, 'Peak level'))).toBeGreaterThan(97);
   expect(errors).toEqual([]);
 });
+
+test('SPL logger records rows at the chosen interval', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('./#/logger');
+  await startMic(page);
+  await page.getByRole('radio', { name: '1 s' }).click();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await expect.poll(async () => Number(await readout(page, 'Rows')), { timeout: 10_000 }).toBeGreaterThanOrEqual(3);
+  expect(num(await readout(page, 'LAeq'))).toBeCloseTo(100, 0);
+  await page.getByRole('button', { name: 'Stop' }).click();
+  expect(errors).toEqual([]);
+});
+
+test('traffic light follows the limit', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('./#/traffic');
+  await startMic(page);
+  await page.getByRole('radio', { name: 'LAF' }).click();
+  const box = page.locator('.traffic');
+  await page.getByRole('button', { name: 'Limit', exact: true }).click();
+  await page.getByRole('radio', { name: '90' }).click(); // 100 dB ≥ 90 → red
+  await page.getByRole('button', { name: 'Close' }).click();
+  await expect(box).toHaveAttribute('data-light', 'red', { timeout: 10_000 });
+  for (let i = 0; i < 12; i++) await page.getByRole('button', { name: 'Raise limit' }).click(); // 102 → amber (within 3 dB)
+  await expect(box).toHaveAttribute('data-light', 'amber');
+  for (let i = 0; i < 4; i++) await page.getByRole('button', { name: 'Raise limit' }).click(); // 106 → green
+  await expect(box).toHaveAttribute('data-light', 'green');
+  expect(errors).toEqual([]);
+});

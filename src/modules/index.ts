@@ -3,7 +3,9 @@ import type { IconName } from '../components/Icon';
 import { Calibration } from './calibration/Calibration';
 import { Fft } from './fft/Fft';
 import { Generator } from './generator/Generator';
+import { Logger } from './logger/Logger';
 import { Rta } from './rta/Rta';
+import { TrafficLight } from './traffic/TrafficLight';
 import { Saved } from './saved/Saved';
 import { Scope } from './scope/Scope';
 import { SoundScope } from './soundscope/SoundScope';
@@ -26,8 +28,8 @@ export const MODULES: InstrumentModule[] = [
   { id: 'generator', title: 'Generator', blurb: 'Sine, noise, sweep', icon: 'sine', Screen: Generator },
   { id: 'scope', title: 'Scope', blurb: 'Waveform & trigger', icon: 'scope', Screen: Scope },
   { id: 'soundscope', title: 'SoundScope', blurb: '1/48 oct + spectrograph', icon: 'waterfall', Screen: SoundScope },
-  { id: 'logger', title: 'SPL Logger', blurb: 'Leq over time', icon: 'log' },
-  { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic' },
+  { id: 'logger', title: 'SPL Logger', blurb: 'Leq over time', icon: 'log', Screen: Logger },
+  { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic', Screen: TrafficLight },
   { id: 'ir', title: 'Impulse / RT60', blurb: 'ETC, T20, T30, C80', icon: 'impulse' },
   { id: 'polarity', title: 'Polarity', blurb: '+ / − check', icon: 'polarity' },
 ];

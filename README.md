@@ -3,10 +3,16 @@
 A personal audio test & measurement app that runs in the browser and installs on an
 iPhone's Home Screen (PWA). No App Store, Xcode or Developer Mode needed.
 
-**Instruments:** SPL meter (A/C/Z, Fast/Slow/Impulse, Leq/Max/Min/Peak, analog dial) ·
-RTA (1/1 and 1/3 octave filter bank) · FFT analyzer (4k–32k points, windows, smoothing,
-max hold, pink-flat view) · Signal generator (sine, square, triangle, pink, white, log sweep) ·
-Calibration.
+**Instruments:**
+- **SPL Meter:** A/C/Z, Fast/Slow/Impulse, Leq/Max/Min/Peak, analog dial
+- **RTA:** 1/1 and 1/3 octave filter bank
+- **FFT:** 4k–32k points, windows, smoothing, max hold, pink-flat view
+- **SoundScope:** 1/48-octave spectrum and scrolling spectrograph
+- **Scope:** triggered waveform with frequency and level readouts
+- **SPL Logger:** LAeq / LAFmax / LCpeak per 1 s, 10 s or 1 min, plus L10/L90; keeps running while you use other instruments
+- **Traffic Light:** LAF or rolling Leq (1/5/15 min) against a limit
+- **Signal generator:** sine, square, triangle, pink, white, log sweep
+- **Calibration**, **Save & export** (CSV / image via the share sheet, saved reference traces)
 
 ## Use it on your iPhone
 
@@ -34,7 +40,8 @@ npm install
 npm run dev          # desktop browser at http://localhost:5173
 npm run dev:phone    # HTTPS on your LAN; open https://<your-mac-ip>:5173 on the iPhone
                      # (accept the self-signed certificate warning once)
-npm test             # DSP unit tests (weighting vs IEC 61672, band filters, FFT, generator)
+npm test             # DSP unit tests (weighting vs IEC 61672, band filters, FFT, generator…)
+npm run e2e          # browser tests with a fake 1 kHz microphone (Playwright + Chromium)
 npm run build        # type-check + production build into dist/
 ```
 
@@ -66,9 +73,8 @@ The FFT runs on the main thread from captured audio blocks.
 
 - Measurement accuracy depends on how Safari handles the mic. Calibrate before trusting absolute levels.
 - Measuring stops when the screen locks or the app goes to the background.
-- Two-input measurements (transfer function, X-Y scope) are not reliable in Safari.
+- Two-input measurements (transfer function, X-Y scope, dual-channel traffic light) are not reliable in Safari.
 
 ## Roadmap
 
-Scope → save/export (CSV/PNG) → SoundScope (1/48 oct + spectrograph) → SPL logger & traffic
-light → impulse response / RT60 → polarity → transfer function.
+Impulse response / RT60 (log sweep) → polarity → transfer function (if a two-input path works).
