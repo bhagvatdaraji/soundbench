@@ -531,3 +531,22 @@
 .metrics thead th { color: var(--text-dim); font-weight: 600; font-size: var(--fs-xs); }
 .metrics td.wide { color: var(--live); }
 .band-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 12px; }
+
+/* ---------- Polarity ---------- */
+.polarity { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 16px; text-align: center; }
+.pol-badge {
+  display: grid;
+  place-items: center;
+  width: 180px;
+  height: 180px;
+  margin-top: 12px;
+  font: 300 120px/1 var(--font-num);
+  border-radius: 50%;
+  border: 3px solid var(--border);
+  color: var(--text-faint);
+}
+.pol-badge.pos { color: var(--live); border-color: var(--live); box-shadow: 0 0 40px color-mix(in srgb, var(--live) 30%, transparent); }
+.pol-badge.neg { color: var(--danger); border-color: var(--danger); box-shadow: 0 0 40px color-mix(in srgb, var(--danger) 30%, transparent); }
+.pol-label { font-size: var(--fs-lg); font-weight: 600; }
+.pol-conf { color: var(--text-dim); font-size: var(--fs-sm); }
+.pol-help { max-width: 440px; color: var(--text-dim); font-size: var(--fs-sm); line-height: 1.5; }

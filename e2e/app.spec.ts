@@ -207,4 +207,28 @@ test.describe('loopback measurements', () => {
     expect(num(await readout(page, 'Valid above'))).toBe(100);
     expect(errors).toEqual([]);
   });
+
+  for (const [mode, sign] of [['direct', '+'], ['invert', '−']] as const) {
+    test(`polarity test reads ${sign} in ${mode} loopback`, async ({ page }) => {
+      const errors = trackErrors(page);
+      await page.goto(`./?loopback=${mode}#/polarity`);
+      await startMic(page);
+      await page.getByRole('button', { name: 'Test', exact: true }).click();
+      await expect(page.locator('.pol-badge')).toHaveAttribute('data-verdict', sign, { timeout: 15_000 });
+      expect(errors).toEqual([]);
+    });
+  }
+
+  test('polarity listen mode hears the generator polarity pulses', async ({ page }) => {
+    const errors = trackErrors(page);
+    await page.goto('./?loopback=invert#/generator');
+    await page.getByRole('radio', { name: 'Polarity' }).click();
+    await page.getByRole('button', { name: 'Play' }).click();
+    await page.goto('./?loopback=invert#/polarity');
+    await page.evaluate(() => (location.hash = '#/polarity'));
+    await startMic(page);
+    await page.getByRole('radio', { name: 'Listen' }).click();
+    await expect(page.locator('.pol-badge')).toHaveAttribute('data-verdict', '−', { timeout: 15_000 });
+    expect(errors).toEqual([]);
+  });
 });

@@ -11,6 +11,7 @@ const WAVES: { value: Waveform; label: string }[] = [
   { value: 'sweep', label: 'Sweep' },
   { value: 'square', label: 'Square' },
   { value: 'triangle', label: 'Triangle' },
+  { value: 'polarity', label: 'Polarity' },
 ];
 const PRESETS = [50, 100, 250, 440, 1000, 2000, 4000, 10000];
 const LOUD_DBFS = -6;
@@ -88,6 +89,10 @@ export function Generator() {
               ))}
             </div>
           </Field>
+        )}
+
+        {g.waveform === 'polarity' && (
+          <p className="field-hint">Positive-going clicks, 4 per second. Run the Polarity instrument in Listen mode on another phone to check each speaker.</p>
         )}
 
         {g.waveform === 'sweep' && (

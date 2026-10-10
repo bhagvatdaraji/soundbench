@@ -16,7 +16,7 @@ export class PinkNoise {
   }
 }
 
-export type Waveform = 'sine' | 'square' | 'triangle' | 'pink' | 'white' | 'sweep';
+export type Waveform = 'sine' | 'square' | 'triangle' | 'pink' | 'white' | 'sweep' | 'polarity';
 
 export interface GeneratorParams {
   waveform: Waveform;
@@ -48,6 +48,8 @@ export class SignalSource {
   private phase = 0;
   private sweepT = 0;
   private pink = new PinkNoise();
+  private pulse: Float32Array | null = null;
+  private pulseT = 0;
   private seed = 22222;
   private gain = 0;
   private targetGain = 0;
@@ -101,6 +103,16 @@ export class SignalSource {
       case 'pink':
         v = rms * Math.sqrt(3) * this.pink.next(this.white());
         break;
+      case 'polarity': {
+        // positive 1 ms raised-cosine pulse, 4 per second (see dsp/polarity.ts)
+        if (!this.pulse) {
+          const n = Math.max(3, Math.round(0.001 * this.fs));
+          this.pulse = Float32Array.from({ length: n }, (_, i) => 0.5 - 0.5 * Math.cos((2 * Math.PI * (i + 0.5)) / n));
+        }
+        v = this.pulseT < this.pulse.length ? amp * this.pulse[this.pulseT] : 0;
+        this.pulseT = (this.pulseT + 1) % Math.round(0.25 * this.fs);
+        break;
+      }
       case 'sweep': {
         // Exponential (log) sweep, repeats.
         const T = Math.max(0.1, p.sweepSeconds);

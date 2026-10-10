@@ -8,6 +8,7 @@ import { Impulse } from './impulse/Impulse';
 import { Larsa } from './larsa/Larsa';
 import { LevelMeter } from './level/LevelMeter';
 import { Logger } from './logger/Logger';
+import { Polarity } from './polarity/Polarity';
 import { Rta } from './rta/Rta';
 import { TrafficLight } from './traffic/TrafficLight';
 import { Saved } from './saved/Saved';
@@ -38,7 +39,7 @@ export const MODULES: InstrumentModule[] = [
   { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic', Screen: TrafficLight },
   { id: 'ir', title: 'Impulse / RT60', blurb: 'ETC, T20, T30, C80', icon: 'impulse', Screen: Impulse },
   { id: 'larsa', title: 'LARSA', blurb: 'Gated speaker response', icon: 'spectrum', Screen: Larsa },
-  { id: 'polarity', title: 'Polarity', blurb: '+ / − check', icon: 'polarity' },
+  { id: 'polarity', title: 'Polarity', blurb: '+ / − check', icon: 'polarity', Screen: Polarity },
 ];
 
 export const SETTINGS_MODULES: InstrumentModule[] = [

@@ -77,3 +77,25 @@ export function bilinear(
     a2: (A0 * K2 - A1 * K + A2) / a0,
   };
 }
+
+/** RBJ cookbook 2nd-order low-pass / high-pass (Q 0.707 = Butterworth). */
+export function rbj(type: 'lowpass' | 'highpass', f0: number, fs: number, q = Math.SQRT1_2): Biquad {
+  const w = (2 * Math.PI * f0) / fs;
+  const cw = Math.cos(w);
+  const alpha = Math.sin(w) / (2 * q);
+  const a0 = 1 + alpha;
+  const b1 = type === 'lowpass' ? 1 - cw : -(1 + cw);
+  const b0 = type === 'lowpass' ? (1 - cw) / 2 : (1 + cw) / 2;
+  return { b0: b0 / a0, b1: b1 / a0, b2: b0 / a0, a1: (-2 * cw) / a0, a2: (1 - alpha) / a0 };
+}
+
+/** Zero-phase (forward then backward) filtering, so peaks stay where they are. */
+export function filtfilt(x: ArrayLike<number>, sections: Biquad[]): Float64Array {
+  const y = Float64Array.from(x);
+  for (const pass of [0, 1]) {
+    const f = new BiquadCascade(sections);
+    if (pass === 0) for (let i = 0; i < y.length; i++) y[i] = f.processSample(y[i]);
+    else for (let i = y.length - 1; i >= 0; i--) y[i] = f.processSample(y[i]);
+  }
+  return y;
+}
