@@ -244,4 +244,24 @@ test.describe('loopback measurements', () => {
     await expect(page.locator('.delay-mem')).toContainText('A 5.0');
     expect(errors).toEqual([]);
   });
+
+  test('STIPA: clean loop scores high, reverberant room scores lower', async ({ page }) => {
+    test.setTimeout(90_000);
+    const errors = trackErrors(page);
+    const measure = async (mode: string) => {
+      await page.goto(`./?loopback=${mode}#/stipa`);
+      await page.evaluate(() => localStorage.setItem('soundbench:stipa', JSON.stringify({ source: 'play', seconds: 9, level: -12 })));
+      await page.reload();
+      await startMic(page);
+      await page.getByRole('button', { name: 'Measure', exact: true }).click();
+      await expect(page.locator('.sti-value')).toBeVisible({ timeout: 30_000 });
+      return num(await page.locator('.sti-value').innerText());
+    };
+    const clean = await measure('direct');
+    expect(clean).toBeGreaterThan(0.9);
+    const room = await measure('room');
+    // RT60 0.6 s plus a strong direct sound: noticeably lower than clean
+    expect(room).toBeLessThan(clean - 0.05);
+    expect(errors).toEqual([]);
+  });
 });

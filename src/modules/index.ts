@@ -15,6 +15,7 @@ import { Transfer } from './transfer/Transfer';
 import { Saved } from './saved/Saved';
 import { Scope } from './scope/Scope';
 import { SoundScope } from './soundscope/SoundScope';
+import { Stipa } from './stipa/Stipa';
 import { SplMeter } from './spl/SplMeter';
 
 export interface InstrumentModule {
@@ -41,6 +42,7 @@ export const MODULES: InstrumentModule[] = [
   { id: 'ir', title: 'Impulse / RT60', blurb: 'ETC, T20, T30, C80', icon: 'impulse', Screen: Impulse },
   { id: 'larsa', title: 'LARSA', blurb: 'Gated speaker response', icon: 'spectrum', Screen: Larsa },
   { id: 'transfer', title: 'Transfer Function', blurb: 'Response, phase, delay', icon: 'scope', Screen: Transfer },
+  { id: 'stipa', title: 'STIPA', blurb: 'Speech intelligibility (exp.)', icon: 'mic', Screen: Stipa },
   { id: 'polarity', title: 'Polarity', blurb: '+ / − check', icon: 'polarity', Screen: Polarity },
 ];
 

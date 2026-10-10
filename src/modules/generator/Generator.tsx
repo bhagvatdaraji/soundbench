@@ -12,6 +12,7 @@ const WAVES: { value: Waveform; label: string }[] = [
   { value: 'square', label: 'Square' },
   { value: 'triangle', label: 'Triangle' },
   { value: 'polarity', label: 'Polarity' },
+  { value: 'stipa', label: 'STIPA' },
 ];
 const PRESETS = [50, 100, 250, 440, 1000, 2000, 4000, 10000];
 const LOUD_DBFS = -6;
@@ -89,6 +90,10 @@ export function Generator() {
               ))}
             </div>
           </Field>
+        )}
+
+        {g.waveform === 'stipa' && (
+          <p className="field-hint">Speech-intelligibility test signal. Measure it with the STIPA instrument (External source) on another phone.</p>
         )}
 
         {g.waveform === 'polarity' && (

@@ -1,3 +1,5 @@
+import { StipaSource } from './stipa';
+
 /** Paul Kellet's refined pink noise filter applied to white noise (≈ −3 dB/oct, ±0.05 dB). */
 export class PinkNoise {
   private b = new Float64Array(7);
@@ -16,7 +18,7 @@ export class PinkNoise {
   }
 }
 
-export type Waveform = 'sine' | 'square' | 'triangle' | 'pink' | 'white' | 'sweep' | 'polarity';
+export type Waveform = 'sine' | 'square' | 'triangle' | 'pink' | 'white' | 'sweep' | 'polarity' | 'stipa';
 
 export interface GeneratorParams {
   waveform: Waveform;
@@ -49,6 +51,7 @@ export class SignalSource {
   private sweepT = 0;
   private pink = new PinkNoise();
   private pulse: Float32Array | null = null;
+  private stipa: StipaSource | null = null;
   private pulseT = 0;
   private seed = 22222;
   private gain = 0;
@@ -102,6 +105,11 @@ export class SignalSource {
         break;
       case 'pink':
         v = rms * Math.sqrt(3) * this.pink.next(this.white());
+        break;
+      case 'stipa':
+        // unit-RMS STIPA signal at the same RMS as a sine of this level
+        if (!this.stipa) this.stipa = new StipaSource(this.fs);
+        v = rms * this.stipa.next();
         break;
       case 'polarity': {
         // positive 1 ms raised-cosine pulse, 4 per second (see dsp/polarity.ts)
