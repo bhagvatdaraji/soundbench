@@ -91,6 +91,8 @@ export class SpectrumAnalyzer {
   readonly fft: FFT;
   private window: Float64Array;
   private scale = 1;
+  /** Equivalent noise bandwidth of the window, in bins. */
+  enbw = 1;
   private readonly re: Float64Array;
   private readonly im: Float64Array;
 
@@ -105,7 +107,12 @@ export class SpectrumAnalyzer {
   setWindow(type: WindowType): void {
     this.window = makeWindow(type, this.size);
     let sum = 0;
-    for (let i = 0; i < this.size; i++) sum += this.window[i];
+    let sq = 0;
+    for (let i = 0; i < this.size; i++) {
+      sum += this.window[i];
+      sq += this.window[i] * this.window[i];
+    }
+    this.enbw = (this.size * sq) / (sum * sum);
     // |X|·2/sum(w) = peak amplitude → RMS² = amp²/2
     this.scale = 2 / (sum * sum);
   }

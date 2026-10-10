@@ -6,6 +6,7 @@ import { Generator } from './generator/Generator';
 import { Rta } from './rta/Rta';
 import { Saved } from './saved/Saved';
 import { Scope } from './scope/Scope';
+import { SoundScope } from './soundscope/SoundScope';
 import { SplMeter } from './spl/SplMeter';
 
 export interface InstrumentModule {
@@ -24,7 +25,7 @@ export const MODULES: InstrumentModule[] = [
   { id: 'fft', title: 'FFT', blurb: 'Up to 32k points', icon: 'spectrum', Screen: Fft },
   { id: 'generator', title: 'Generator', blurb: 'Sine, noise, sweep', icon: 'sine', Screen: Generator },
   { id: 'scope', title: 'Scope', blurb: 'Waveform & trigger', icon: 'scope', Screen: Scope },
-  { id: 'soundscope', title: 'SoundScope', blurb: '1/48 oct + spectrograph', icon: 'waterfall' },
+  { id: 'soundscope', title: 'SoundScope', blurb: '1/48 oct + spectrograph', icon: 'waterfall', Screen: SoundScope },
   { id: 'logger', title: 'SPL Logger', blurb: 'Leq over time', icon: 'log' },
   { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic' },
   { id: 'ir', title: 'Impulse / RT60', blurb: 'ETC, T20, T30, C80', icon: 'impulse' },

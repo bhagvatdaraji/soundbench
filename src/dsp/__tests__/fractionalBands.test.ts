@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { SpectrumAnalyzer } from '../fft';
 import { fractionalCenters, groupFractional } from '../fractionalBands';
 
 describe('fractional-octave grouping', () => {
@@ -28,5 +29,20 @@ describe('fractional-octave grouping', () => {
     const g = groupFractional(power, binHz, c, 12);
     const best = g.indexOf(Math.max(...g));
     expect(Math.abs(Math.log2(c[best] / (k * binHz)))).toBeLessThan(1 / 24 + 1e-9);
+  });
+
+  it('sum mode reads a tone at its true level in a band several bins wide', () => {
+    const fs = 48000;
+    const n = 16384;
+    const sa = new SpectrumAnalyzer(n, 'hann');
+    expect(sa.enbw).toBeCloseTo(1.5, 3);
+    const x = Float64Array.from({ length: n }, (_, i) => 0.1 * Math.sin((2 * Math.PI * 2000.7 * i) / fs));
+    const p = new Float64Array(n / 2 + 1);
+    sa.power(x, p);
+    const c = fractionalCenters(48, 20, 20000);
+    const g = groupFractional(p, fs / n, c, 48, undefined, 'sum', sa.enbw);
+    const total = Math.max(...g);
+    // RMS² of a 0.1 sine is 0.005; allow 0.5 dB (a tone near a band edge splits across two)
+    expect(Math.abs(10 * Math.log10(total / 0.005))).toBeLessThan(0.5);
   });
 });

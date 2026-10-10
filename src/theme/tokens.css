@@ -30,6 +30,13 @@
   --accent: #34d399;
   --accent-text: #04140d;
 
+  /* spectrograph heat map, quiet → loud */
+  --heat-0: #0b0b0d;
+  --heat-1: #1e3a8a;
+  --heat-2: #0ea5a4;
+  --heat-3: #facc15;
+  --heat-4: #ef4444;
+
   /* analog meter */
   --meter-face: #f3ebd3;
   --meter-face-edge: #d9ceb0;

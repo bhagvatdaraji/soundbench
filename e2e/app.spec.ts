@@ -112,3 +112,12 @@ test('save an RTA snapshot, use it as reference, export CSV, and find it after r
   await expect(page.locator('.saved-item', { hasText: 'Living room' })).toBeVisible();
   expect(errors).toEqual([]);
 });
+
+test('SoundScope finds the 1 kHz peak', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('./#/soundscope');
+  await startMic(page);
+  await expect.poll(async () => await readout(page, /^Peak$/), { timeout: 10_000 }).toMatch(/^(1\.000 kHz|99\d\.\d Hz)$/);
+  await expect.poll(async () => num(await readout(page, 'Peak level'))).toBeGreaterThan(97);
+  expect(errors).toEqual([]);
+});

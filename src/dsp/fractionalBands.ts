@@ -15,8 +15,11 @@ export function fractionalCenters(perOct: number, fMin: number, fMax: number): F
 }
 
 /**
- * Groups FFT power bins into fractional-octave bands (mean power of the bins inside each band).
- * Where a band is narrower than one bin, the power is interpolated at its centre instead.
+ * Groups FFT power bins into fractional-octave bands.
+ * - `mean`: average bin power, i.e. a smoothed spectrum (keeps a tone's peak-bin level).
+ * - `sum`: total power in the band divided by the window's ENBW, i.e. an RTA band level
+ *   (a tone reads its true level whichever bins its main lobe spreads over).
+ * Where a band is narrower than one bin, the bin power is interpolated at its centre.
  */
 export function groupFractional(
   power: ArrayLike<number>,
@@ -24,6 +27,8 @@ export function groupFractional(
   centers: Float64Array,
   perOct: number,
   out: Float64Array = new Float64Array(centers.length),
+  mode: 'mean' | 'sum' = 'mean',
+  enbw = 1,
 ): Float64Array {
   const half = 2 ** (1 / (2 * perOct));
   const last = power.length - 1;
@@ -34,7 +39,7 @@ export function groupFractional(
     if (k1 >= k0 && k0 >= 1) {
       let sum = 0;
       for (let k = k0; k <= k1; k++) sum += power[k];
-      out[i] = sum / (k1 - k0 + 1);
+      out[i] = mode === 'sum' ? Math.max(sum / enbw, power[Math.round(fc / binHz)] ?? 0) : sum / (k1 - k0 + 1);
     } else {
       const kf = Math.min(last, fc / binHz);
       const ka = Math.floor(kf);
