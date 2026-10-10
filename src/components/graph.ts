@@ -106,3 +106,119 @@ export function drawCurve(
   ctx.stroke();
   ctx.restore();
 }
+
+/** Linear x/y plot area (time-domain views). */
+export interface LinPlot {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+  xMin: number;
+  xMax: number;
+  yMin: number;
+  yMax: number;
+}
+
+export function linPlot(w: number, h: number, r: Omit<LinPlot, 'x' | 'y' | 'w' | 'h'>): LinPlot {
+  return { x: 40, y: 18, w: Math.max(10, w - 56), h: Math.max(10, h - 40), ...r };
+}
+export const xLin = (p: LinPlot, v: number) => p.x + ((v - p.xMin) / (p.xMax - p.xMin)) * p.w;
+export const yLin = (p: LinPlot, v: number) => p.y + ((p.yMax - v) / (p.yMax - p.yMin)) * p.h;
+
+/** A 1-2-5 step giving roughly `target` divisions over `span`. */
+export function niceStep(span: number, target = 6): number {
+  const raw = span / target;
+  const p = 10 ** Math.floor(Math.log10(raw));
+  for (const m of [1, 2, 5, 10]) if (m * p >= raw) return m * p;
+  return 10 * p;
+}
+
+export function drawLinGrid(
+  ctx: CanvasRenderingContext2D,
+  p: LinPlot,
+  { xFmt = (v: number) => String(+v.toFixed(3)), yFmt = (v: number) => String(+v.toFixed(2)), xUnit = '', yUnit = '' } = {},
+): void {
+  const t = canvasTheme();
+  ctx.save();
+  ctx.lineWidth = 1;
+  ctx.font = `10px ${t.fontNum}`;
+  ctx.fillStyle = t.axisLabel;
+  const xs = niceStep(p.xMax - p.xMin);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  for (let v = Math.ceil(p.xMin / xs) * xs; v <= p.xMax + 1e-9; v += xs) {
+    const X = Math.round(xLin(p, v)) + 0.5;
+    ctx.strokeStyle = t.grid;
+    ctx.beginPath();
+    ctx.moveTo(X, p.y);
+    ctx.lineTo(X, p.y + p.h);
+    ctx.stroke();
+    ctx.fillText(xFmt(v), X, p.y + p.h + 5);
+  }
+  const ys = niceStep(p.yMax - p.yMin, 5);
+  ctx.textAlign = 'right';
+  ctx.textBaseline = 'middle';
+  for (let v = Math.ceil(p.yMin / ys) * ys; v <= p.yMax + 1e-9; v += ys) {
+    const Y = Math.round(yLin(p, v)) + 0.5;
+    ctx.strokeStyle = Math.abs(v) < 1e-9 ? t.gridMajor : t.grid;
+    ctx.beginPath();
+    ctx.moveTo(p.x, Y);
+    ctx.lineTo(p.x + p.w, Y);
+    ctx.stroke();
+    ctx.fillText(yFmt(v), p.x - 5, Y);
+  }
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  if (yUnit) ctx.fillText(yUnit, 4, 2);
+  ctx.textAlign = 'right';
+  if (xUnit) ctx.fillText(xUnit, p.x + p.w, 2);
+  ctx.restore();
+}
+
+/** Polyline of y[i] at x = x0 + i·dx, decimated to min/max per pixel column. */
+export function drawSeries(
+  ctx: CanvasRenderingContext2D,
+  p: LinPlot,
+  y: ArrayLike<number>,
+  x0: number,
+  dx: number,
+  color: string,
+  width = 1.2,
+): void {
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(p.x, p.y, p.w, p.h);
+  ctx.clip();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = width;
+  ctx.lineJoin = 'round';
+  ctx.beginPath();
+  const i0 = Math.max(0, Math.floor((p.xMin - x0) / dx));
+  const i1 = Math.min(y.length - 1, Math.ceil((p.xMax - x0) / dx));
+  const perPx = (i1 - i0) / p.w;
+  const clampY = (v: number) => Math.min(p.y + p.h + 2, Math.max(p.y - 2, yLin(p, v)));
+  if (perPx <= 3) {
+    for (let i = i0; i <= i1; i++) {
+      const X = xLin(p, x0 + i * dx);
+      if (i === i0) ctx.moveTo(X, clampY(y[i]));
+      else ctx.lineTo(X, clampY(y[i]));
+    }
+  } else {
+    for (let c = 0; c < p.w; c++) {
+      const a = i0 + Math.floor(c * perPx);
+      const b = Math.min(i1, i0 + Math.floor((c + 1) * perPx));
+      let lo = Infinity;
+      let hi = -Infinity;
+      for (let i = a; i <= b; i++) {
+        if (y[i] < lo) lo = y[i];
+        if (y[i] > hi) hi = y[i];
+      }
+      const X = p.x + c;
+      if (c === 0) ctx.moveTo(X, clampY(hi));
+      else ctx.lineTo(X, clampY(hi));
+      ctx.lineTo(X, clampY(lo));
+    }
+  }
+  ctx.stroke();
+  ctx.restore();
+}

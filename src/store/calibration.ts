@@ -6,6 +6,8 @@ export interface Calibration {
   offsetDb: number;
   /** Set once the user has calibrated against a reference. */
   calibratedAt: string | null;
+  /** Measured speaker→mic system latency (ms), subtracted from arrival times. */
+  latencyMs: number | null;
 }
 
 /**
@@ -14,7 +16,7 @@ export interface Calibration {
  */
 export const DEFAULT_OFFSET_DB = 120;
 
-let current: Calibration = load('calibration', { offsetDb: DEFAULT_OFFSET_DB, calibratedAt: null });
+let current: Calibration = load('calibration', { offsetDb: DEFAULT_OFFSET_DB, calibratedAt: null, latencyMs: null });
 const listeners = new Set<() => void>();
 
 export function getCalibration(): Calibration {

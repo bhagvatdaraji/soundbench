@@ -15,12 +15,12 @@ export function Calibration() {
   const spl = stats.now.ZS;
   const dbfs = Number.isFinite(spl) ? spl - cal.offsetDb : -Infinity;
   const stable = useStable(dbfs);
-  const nudge = (d: number) => setCalibration({ offsetDb: +(cal.offsetDb + d).toFixed(1), calibratedAt: new Date().toISOString() });
+  const nudge = (d: number) => setCalibration({ ...cal, offsetDb: +(cal.offsetDb + d).toFixed(1), calibratedAt: new Date().toISOString() });
 
   const apply = () => {
     const r = Number(ref);
     if (!Number.isFinite(r) || !Number.isFinite(dbfs) || !stable) return;
-    setCalibration({ offsetDb: +(r - dbfs).toFixed(2), calibratedAt: new Date().toISOString() });
+    setCalibration({ ...cal, offsetDb: +(r - dbfs).toFixed(2), calibratedAt: new Date().toISOString() });
   };
 
   const ts = status.trackSettings as (MediaTrackSettings & Record<string, unknown>) | null;
@@ -54,7 +54,7 @@ export function Calibration() {
               <button className="btn" onClick={() => nudge(-0.1)}>−0.1</button>
               <button className="btn" onClick={() => nudge(0.1)}>+0.1</button>
               <button className="btn" onClick={() => nudge(1)}>+1</button>
-              <button className="btn ghost" onClick={() => setCalibration({ offsetDb: DEFAULT_OFFSET_DB, calibratedAt: null })}>
+              <button className="btn ghost" onClick={() => setCalibration({ ...cal, offsetDb: DEFAULT_OFFSET_DB, calibratedAt: null })}>
                 Reset
               </button>
             </div>

@@ -516,3 +516,18 @@
 }
 .dist-row { display: grid; grid-template-columns: 30px 1fr auto; gap: 6px; color: var(--text-dim); white-space: nowrap; }
 .dist-row span:first-child { color: var(--max-hold); }
+
+/* ---------- Progress & measurement panels ---------- */
+.progress { position: relative; height: 26px; margin: 8px 12px; background: var(--surface-2); border-radius: var(--radius-sm); overflow: hidden; }
+.progress-bar { height: 100%; background: color-mix(in srgb, var(--accent) 45%, transparent); transition: width 0.1s linear; }
+.progress-label { position: absolute; inset: 0; display: grid; place-items: center; font-size: var(--fs-xs); font-weight: 600; }
+.measure-intro { max-width: 520px; margin: 0 auto; padding: 22px 16px; text-align: center; color: var(--text-dim); line-height: 1.5; font-size: var(--fs-sm); }
+.measure-intro .btn { margin-top: 14px; padding: 14px 26px; font-size: var(--fs-md); }
+.measure-error { margin: 6px 12px; color: var(--max-hold); font-size: var(--fs-sm); }
+.metrics { overflow: auto; padding: 8px 12px 14px; }
+.metrics table { border-collapse: collapse; width: 100%; font-size: var(--fs-sm); }
+.metrics th, .metrics td { padding: 6px 8px; text-align: right; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.metrics th:first-child, .metrics td:first-child { text-align: left; color: var(--text-dim); }
+.metrics thead th { color: var(--text-dim); font-weight: 600; font-size: var(--fs-xs); }
+.metrics td.wide { color: var(--live); }
+.band-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 12px; }

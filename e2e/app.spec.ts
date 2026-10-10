@@ -180,4 +180,31 @@ test.describe('loopback measurements', () => {
     expect(num(await readout(page, /^THD$/))).toBeLessThan(1.2);
     expect(errors).toEqual([]);
   });
+
+  test('impulse response in a simulated room: RT60 0.6 s, arrival 5 ms', async ({ page }) => {
+    const errors = trackErrors(page);
+    await page.goto('./?loopback=room#/ir');
+    await startMic(page);
+    await page.getByRole('button', { name: 'Measure', exact: true }).first().click();
+    await expect.poll(async () => num(await readout(page, 'T30')), { timeout: 20_000 }).toBeGreaterThan(0);
+    const t30 = num(await readout(page, 'T30'));
+    expect(t30).toBeGreaterThan(0.54);
+    expect(t30).toBeLessThan(0.66);
+    expect(num(await readout(page, 'Arrival'))).toBeCloseTo(5, 0);
+    await page.getByRole('radio', { name: 'Metrics' }).click();
+    await expect(page.locator('.metrics table')).toContainText('T30');
+    expect(errors).toEqual([]);
+  });
+
+  test('LARSA: gated response of a clean loop is flat', async ({ page }) => {
+    const errors = trackErrors(page);
+    await page.goto('./?loopback=direct#/larsa');
+    await startMic(page);
+    await page.getByRole('button', { name: 'Measure', exact: true }).first().click();
+    await expect.poll(async () => num(await readout(page, 'Arrival')), { timeout: 20_000 }).toBeCloseTo(5, 0);
+    expect(num(await readout(page, 'Valid above'))).toBe(200); // 5 ms gate
+    await page.getByRole('radio', { name: '10 ms' }).click();
+    expect(num(await readout(page, 'Valid above'))).toBe(100);
+    expect(errors).toEqual([]);
+  });
 });

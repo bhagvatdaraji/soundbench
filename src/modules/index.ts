@@ -4,6 +4,8 @@ import { Calibration } from './calibration/Calibration';
 import { Distortion } from './distortion/Distortion';
 import { Fft } from './fft/Fft';
 import { Generator } from './generator/Generator';
+import { Impulse } from './impulse/Impulse';
+import { Larsa } from './larsa/Larsa';
 import { LevelMeter } from './level/LevelMeter';
 import { Logger } from './logger/Logger';
 import { Rta } from './rta/Rta';
@@ -34,7 +36,8 @@ export const MODULES: InstrumentModule[] = [
   { id: 'soundscope', title: 'SoundScope', blurb: '1/48 oct + spectrograph', icon: 'waterfall', Screen: SoundScope },
   { id: 'logger', title: 'SPL Logger', blurb: 'Leq over time', icon: 'log', Screen: Logger },
   { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic', Screen: TrafficLight },
-  { id: 'ir', title: 'Impulse / RT60', blurb: 'ETC, T20, T30, C80', icon: 'impulse' },
+  { id: 'ir', title: 'Impulse / RT60', blurb: 'ETC, T20, T30, C80', icon: 'impulse', Screen: Impulse },
+  { id: 'larsa', title: 'LARSA', blurb: 'Gated speaker response', icon: 'spectrum', Screen: Larsa },
   { id: 'polarity', title: 'Polarity', blurb: '+ / − check', icon: 'polarity' },
 ];
 

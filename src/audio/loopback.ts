@@ -22,7 +22,8 @@ export function loopbackMode(): LoopbackMode | null {
 /** Builds the simulated path from `from`; `output` is used as the mic, `input` to disconnect it. */
 export function buildLoopback(ctx: AudioContext, from: AudioNode, mode: LoopbackMode): { input: AudioNode; output: AudioNode } {
   const delay = ctx.createDelay(1);
-  delay.delayTime.value = LOOPBACK_DELAY_S;
+  // whole samples: a fractional delay interpolates linearly, which acts as a low-pass filter
+  delay.delayTime.value = Math.round(LOOPBACK_DELAY_S * ctx.sampleRate) / ctx.sampleRate;
   from.connect(delay);
   let tail: AudioNode = delay;
 
