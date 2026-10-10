@@ -594,3 +594,39 @@
 .about-item strong { display: block; }
 .about-help { display: block; color: var(--text-dim); font-size: var(--fs-sm); }
 .tile-icon.small { width: 36px; height: 36px; margin: 0; border-radius: 10px; }
+
+/* ---------- FAQ & help ---------- */
+.help-btn { margin-left: 2px; color: var(--text-dim); }
+.help-steps { margin: 4px 0 14px; padding-left: 22px; line-height: 1.5; }
+.help-steps li { margin: 4px 0; }
+.help-steps li::marker { color: var(--accent); font-weight: 600; }
+.faq { border-top: 1px solid var(--border); }
+.faq-item { border-bottom: 1px solid var(--border); }
+.faq-item summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: var(--tap);
+  padding: 8px 2px;
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--fs-md);
+}
+.faq-item summary::-webkit-details-marker { display: none; }
+.faq-item summary::after {
+  content: '';
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--text-dim);
+  border-bottom: 2px solid var(--text-dim);
+  margin-right: 4px;
+  transform: translateY(-2px) rotate(45deg);
+  transition: transform 0.15s;
+}
+.faq-item[open] summary::after { transform: translateY(2px) rotate(225deg); }
+.faq-item p { margin: 0 2px 12px; color: var(--text-dim); font-size: var(--fs-sm); line-height: 1.5; }
+.faq-group h4, .about section > h4 { margin: 16px 0 4px; font-size: var(--fs-sm); color: var(--text); }
+.faq-title { margin-top: 26px !important; }
+.help-more { margin-top: 14px; padding: 10px 0; color: var(--accent); font-weight: 600; }

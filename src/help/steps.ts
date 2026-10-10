@@ -1,0 +1,20 @@
+/** Short how-to steps per instrument, shown in its "?" sheet. Keep each to one line. */
+export const STEPS: Record<string, string[]> = {
+  spl: ['Tap Start microphone.', 'Pick A, C or Z and Fast or Slow at the top.', 'Tap Reset to restart Leq, Max and Min.'],
+  level: ['Tap Start microphone.', 'Watch Peak for clipping; the light turns red if the input overloads.', 'Tap Reset to clear the clip count and max peak.'],
+  logger: ['Choose an interval (1 s, 10 s or 1 min).', 'Tap Start and leave the app open on screen.', 'Tap Save to export the log as CSV.'],
+  traffic: ['Choose LAF or a Leq window at the top.', 'Set your limit with − and +.', 'Green is fine, amber is close, red is over.'],
+  rta: ['Tap Start microphone.', 'Tap a bar to read its level.', 'Save a snapshot to compare later as a blue reference.'],
+  fft: ['Tap Start microphone.', 'Drag on the graph to read any frequency.', 'Use 1/6 or 1/3 smoothing for a cleaner curve.'],
+  soundscope: ['Tap Start microphone.', 'Loud, steady lines in the scrolling view are resonances or feedback.', 'Tap the graph to read a frequency.'],
+  scope: ['Tap Start microphone.', 'Pick a time per division at the top.', 'Tap the graph to set the trigger level; Freeze to hold.'],
+  distortion: ['Hold the phone close to the speaker under test.', 'Tap Start test.', 'Read THD and THD+N; lower is better.'],
+  ir: ['Place the speaker and the phone where you want to measure.', 'Turn the volume up and tap Measure.', 'Open Metrics for RT60 (T30) per band.'],
+  larsa: ['Put the phone on the speaker’s axis, 0.5–1 m away, away from walls.', 'Tap Measure.', 'Drag on the impulse so the gate ends before the first reflection.'],
+  transfer: ['Connect the phone to the system, mic near the speaker.', 'Tap Start and wait a few seconds.', 'Use Store A and Store B on two speakers to get the delay difference.'],
+  polarity: ['Connect the phone to the speaker under test.', 'Hold the mic near it and tap Test.', 'All speakers should show the same sign.'],
+  stipa: ['Play the STIPA signal through the system.', 'Place the phone at a listener position and tap Measure.', 'Keep still and quiet until it finishes.'],
+  generator: ['Pick a waveform and level (start low).', 'Tap Play.', 'The sine button in other instruments starts and stops it too.'],
+  calibration: ['Play a known level near the mic.', 'Type the true level and tap Set when the reading is steady.', 'Optional: Measure latency with the mic at the phone’s speaker.'],
+  saved: ['Use Save in an instrument to keep a measurement.', 'Tap the share icon to export it.'],
+};

@@ -29,7 +29,9 @@ Home Screen (PWA). No App Store, Xcode or Developer Mode needed.
 
 **Generate**: sine, square, triangle, pink/white noise, log sweep, Polarity and STIPA test signals.
 
-**Setup**: Calibration (mic offset and speaker→mic latency), Saved measurements (CSV / image / WAV export through the share sheet), About & help.
+**Setup**: Calibration (mic offset and speaker→mic latency), Saved measurements (CSV / image / WAV export through the share sheet), About & help with an FAQ.
+
+Every instrument has a small ⓘ button with three quick steps and the questions that apply to it. Help text lives in `src/help/`.
 
 ## Use it on your iPhone
 

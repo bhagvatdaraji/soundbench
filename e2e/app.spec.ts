@@ -271,3 +271,23 @@ test.describe('loopback measurements', () => {
     expect(errors).toEqual([]);
   });
 });
+
+test('FAQ: questions collapsed, answers on tap; "?" shows steps for an instrument', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('./#/about');
+  const q = page.locator('.faq-item', { hasText: 'How do I put it on my Home Screen?' });
+  await expect(q).toBeVisible();
+  await expect(q.locator('p')).toBeHidden();
+  await q.locator('summary').click();
+  await expect(q.locator('p')).toContainText('Add to Home Screen');
+  await expect(page.getByRole('button', { name: /How to use/ })).toHaveCount(0); // no "?" on About itself
+
+  await page.goto('./#/spl');
+  await page.getByRole('button', { name: 'How to use SPL Meter' }).click();
+  const sheet = page.getByRole('dialog', { name: 'SPL Meter' });
+  await expect(sheet.locator('.help-steps li')).toHaveCount(3);
+  await expect(sheet.locator('.faq-item', { hasText: 'Uncalibrated' })).toBeVisible();
+  await sheet.getByRole('button', { name: 'Close' }).click();
+  await expect(sheet).toHaveCount(0);
+  expect(errors).toEqual([]);
+});
