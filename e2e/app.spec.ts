@@ -43,7 +43,7 @@ test('FFT finds the 1 kHz peak', async ({ page }) => {
   await page.goto('./#/fft');
   await startMic(page);
   await expect.poll(async () => await readout(page, /^Peak$/), { timeout: 10_000 }).toBe('1.000 kHz');
-  expect(num(await readout(page, 'Peak level'))).toBeCloseTo(100, 0);
+  await expect.poll(async () => num(await readout(page, 'Peak level'))).toBeCloseTo(100, 0);
   expect(errors).toEqual([]);
 });
 
@@ -69,5 +69,15 @@ test('generator starts and stops', async ({ page }) => {
   await page.getByRole('radio', { name: 'Pink' }).click();
   await page.getByRole('button', { name: 'Stop' }).click();
   await expect(page.getByRole('button', { name: 'Play' })).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('scope triggers on the tone and reads its frequency', async ({ page }) => {
+  const errors = trackErrors(page);
+  await page.goto('./#/scope');
+  await startMic(page);
+  await expect.poll(async () => await readout(page, 'Trigger'), { timeout: 10_000 }).toBe('trig’d');
+  await expect.poll(async () => num(await readout(page, 'Freq'))).toBeCloseTo(1, 2); // "1.000 kHz"
+  expect(num(await readout(page, 'RMS'))).toBeCloseTo(-20, 0);
   expect(errors).toEqual([]);
 });

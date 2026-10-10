@@ -85,14 +85,15 @@
 .topbar-chips {
   order: 3;
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 6px 8px;
   flex-basis: 100%;
   min-width: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
 }
 .topbar-chips:empty { display: none; }
-.topbar-chips .seg { flex-wrap: nowrap; flex-shrink: 0; }
+/* A control wider than the screen scrolls on its own rather than wrapping its buttons. */
+.topbar-chips .seg { flex-wrap: nowrap; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.topbar-chips .seg::-webkit-scrollbar { display: none; }
 .topbar .cal-badge { margin-left: auto; }
 .icon-btn {
   display: grid;
@@ -156,7 +157,7 @@
   }
   .topbar { padding: 4px 8px; flex-wrap: nowrap; }
   .topbar-title { margin-right: 8px; }
-  .topbar-chips { order: 0; flex: 1; flex-basis: auto; }
+  .topbar-chips { order: 0; flex: 1; flex-basis: auto; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; }
   .topbar .cal-badge { margin-left: 0; }
 }
 

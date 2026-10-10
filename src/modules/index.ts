@@ -4,6 +4,7 @@ import { Calibration } from './calibration/Calibration';
 import { Fft } from './fft/Fft';
 import { Generator } from './generator/Generator';
 import { Rta } from './rta/Rta';
+import { Scope } from './scope/Scope';
 import { SplMeter } from './spl/SplMeter';
 
 export interface InstrumentModule {
@@ -21,7 +22,7 @@ export const MODULES: InstrumentModule[] = [
   { id: 'rta', title: 'RTA', blurb: '1/1 & 1/3 octave', icon: 'bars', Screen: Rta },
   { id: 'fft', title: 'FFT', blurb: 'Up to 32k points', icon: 'spectrum', Screen: Fft },
   { id: 'generator', title: 'Generator', blurb: 'Sine, noise, sweep', icon: 'sine', Screen: Generator },
-  { id: 'scope', title: 'Scope', blurb: 'Waveform & X-Y', icon: 'scope' },
+  { id: 'scope', title: 'Scope', blurb: 'Waveform & trigger', icon: 'scope', Screen: Scope },
   { id: 'soundscope', title: 'SoundScope', blurb: '1/48 oct + spectrograph', icon: 'waterfall' },
   { id: 'logger', title: 'SPL Logger', blurb: 'Leq over time', icon: 'log' },
   { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic' },

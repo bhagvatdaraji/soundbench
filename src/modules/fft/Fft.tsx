@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { engine } from '../../audio/engine';
+import { readLatest, useCaptureRing } from '../../audio/useCaptureRing';
 import { GraphCanvas } from '../../components/GraphCanvas';
 import { drawGrid, freqOfX, plotRect, xOfFreq, yOfDb, type Plot } from '../../components/graph';
 import { MicGate } from '../../components/MicGate';
@@ -36,9 +37,9 @@ export function Fft() {
   const [cursorHz, setCursorHz] = useState<number | null>(null);
   const [read, setRead] = useState({ peakHz: 0, peakDb: -Infinity, cursorDb: -Infinity });
 
-  const ring = useRef({ buf: new Float32Array(RING), pos: 0, filled: 0 });
+  const ring = useCaptureRing(RING);
   const analyzer = useMemo(() => new SpectrumAnalyzer(s.size, s.window), [s.size, s.window]);
-  const spec = useRef({ power: new Float64Array(0), avg: new Float64Array(0), smooth: new Float64Array(0), max: new Float64Array(0), db: new Float64Array(0), size: 0 });
+  const spec = useRef({ power: new Float64Array(0), avg: new Float64Array(0), smooth: new Float64Array(0), max: new Float64Array(0), db: new Float64Array(0), size: 0, fresh: true });
   const frame = useMemo(() => new Float32Array(s.size), [s.size]);
   const lastUpdate = useRef(0);
   const sRef = useRef(s);
@@ -47,22 +48,6 @@ export function Fft() {
   cursorRef.current = cursorHz;
   const runningRef = useRef(running);
   runningRef.current = running;
-
-  useEffect(() => {
-    const release = engine.useCapture();
-    const off = engine.on('capture', ({ samples }) => {
-      const r = ring.current;
-      for (let i = 0; i < samples.length; i++) {
-        r.buf[r.pos] = samples[i];
-        r.pos = (r.pos + 1) % RING;
-      }
-      r.filled = Math.min(RING, r.filled + samples.length);
-    });
-    return () => {
-      release();
-      off();
-    };
-  }, []);
 
   const resetSpectrum = (size = s.size) => {
     const bins = size / 2 + 1;
@@ -73,6 +58,7 @@ export function Fft() {
       max: new Float64Array(bins),
       db: new Float64Array(bins),
       size,
+      fresh: true,
     };
   };
   useEffect(() => resetSpectrum(s.size), [s.size]);
@@ -91,14 +77,11 @@ export function Fft() {
     const r = ring.current;
     const st = sRef.current;
     const sp = spec.current;
-    if (sp.size !== st.size || r.filled < st.size) return;
-    let start = (r.pos - st.size + RING) % RING;
-    for (let i = 0; i < st.size; i++) {
-      frame[i] = r.buf[start];
-      start = start + 1 === RING ? 0 : start + 1;
-    }
+    if (sp.size !== st.size || !readLatest(r, frame)) return;
     analyzer.power(frame, sp.power);
-    const a = AVERAGING[st.averaging];
+    // Seed the average with the first frame so it doesn't ramp up from silence.
+    const a = sp.fresh ? 0 : AVERAGING[st.averaging];
+    sp.fresh = false;
     for (let k = 0; k < sp.power.length; k++) sp.avg[k] = a * sp.avg[k] + (1 - a) * sp.power[k];
     smoothOctave(sp.avg, binHz, st.smoothing, sp.smooth);
     let peakK = 1;

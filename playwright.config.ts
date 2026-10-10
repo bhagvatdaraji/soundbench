@@ -10,7 +10,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   globalSetup: './e2e/global-setup.ts',
   use: {
-    baseURL: 'http://localhost:4173/',
+    baseURL: 'http://localhost:4174/',
     viewport: { width: 390, height: 844 },
     permissions: ['microphone'],
     launchOptions: {
@@ -23,8 +23,8 @@ export default defineConfig({
     },
   },
   webServer: {
-    command: 'npm run build && npx vite preview --port 4173 --strictPort',
-    url: 'http://localhost:4173/',
+    command: 'npm run build && npx vite preview --port 4174 --strictPort',
+    url: 'http://localhost:4174/',
     reuseExistingServer: false,
     timeout: 120_000,
   },
