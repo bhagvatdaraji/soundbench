@@ -503,3 +503,16 @@
 .lm-scale { position: relative; height: 16px; margin: 0 66px 0 54px; font-size: 10px; color: var(--text-faint); }
 .lm-scale span { position: absolute; transform: translateX(-50%); }
 .lm-readouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px; margin: 22px 0 10px; }
+
+/* ---------- Distortion ---------- */
+.dist-hint { margin: 0; padding: 10px 14px; font-size: var(--fs-sm); color: var(--text-dim); line-height: 1.45; }
+.dist-table {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  gap: 2px 18px;
+  padding: 8px 14px 10px;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-sm);
+}
+.dist-row { display: grid; grid-template-columns: 30px 1fr auto; gap: 6px; color: var(--text-dim); white-space: nowrap; }
+.dist-row span:first-child { color: var(--max-hold); }

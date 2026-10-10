@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import type { IconName } from '../components/Icon';
 import { Calibration } from './calibration/Calibration';
+import { Distortion } from './distortion/Distortion';
 import { Fft } from './fft/Fft';
 import { Generator } from './generator/Generator';
 import { LevelMeter } from './level/LevelMeter';
@@ -29,6 +30,7 @@ export const MODULES: InstrumentModule[] = [
   { id: 'fft', title: 'FFT', blurb: 'Up to 32k points', icon: 'spectrum', Screen: Fft },
   { id: 'generator', title: 'Generator', blurb: 'Sine, noise, sweep', icon: 'sine', Screen: Generator },
   { id: 'scope', title: 'Scope', blurb: 'Waveform & trigger', icon: 'scope', Screen: Scope },
+  { id: 'distortion', title: 'Distortion', blurb: 'THD, THD+N, harmonics', icon: 'peak', Screen: Distortion },
   { id: 'soundscope', title: 'SoundScope', blurb: '1/48 oct + spectrograph', icon: 'waterfall', Screen: SoundScope },
   { id: 'logger', title: 'SPL Logger', blurb: 'Leq over time', icon: 'log', Screen: Logger },
   { id: 'traffic', title: 'Traffic Light', blurb: 'Level vs limit', icon: 'traffic', Screen: TrafficLight },

@@ -160,3 +160,24 @@ test('level meter reads the tone in dBFS', async ({ page }) => {
   await expect(page.getByRole('status')).toHaveText('No clipping');
   expect(errors).toEqual([]);
 });
+
+test.describe('loopback measurements', () => {
+  test('distortion: clean loop ≈ 0 %, distorting loop ≈ 1 % THD', async ({ page }) => {
+    const errors = trackErrors(page);
+    await page.goto('./?loopback=direct#/distortion');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+    await startMic(page);
+    await page.getByRole('button', { name: 'Start test' }).click();
+    await expect.poll(async () => await readout(page, 'Fundamental'), { timeout: 10_000 }).toBe('1.000 kHz');
+    await expect.poll(async () => num(await readout(page, /^THD$/))).toBeLessThan(0.05);
+
+    await page.goto('./?loopback=dist#/distortion');
+    await startMic(page);
+    await page.getByRole('button', { name: 'Start test' }).click();
+    // cubic shaper, k = 0.64 at −12 dBFS (peak 0.251): H3/H1 = k·A²/4 ≈ 1.0 %
+    await expect.poll(async () => num(await readout(page, /^THD$/)), { timeout: 10_000 }).toBeGreaterThan(0.85);
+    expect(num(await readout(page, /^THD$/))).toBeLessThan(1.2);
+    expect(errors).toEqual([]);
+  });
+});
