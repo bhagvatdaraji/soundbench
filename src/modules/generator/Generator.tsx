@@ -13,6 +13,9 @@ const WAVES: { value: Waveform; label: string }[] = [
   { value: 'triangle', label: 'Triangle' },
 ];
 const PRESETS = [50, 100, 250, 440, 1000, 2000, 4000, 10000];
+const LOUD_DBFS = -6;
+/** Asked once per app session. */
+let loudConfirmed = false;
 const F_MIN = 10;
 const F_MAX = 22000;
 
@@ -26,6 +29,13 @@ const fromSlider = (v: number) => {
 export function Generator() {
   const { generator: g, generatorRunning } = useEngineStatus();
   const set = engine.setGenerator.bind(engine);
+  const setLevel = (level: number) => {
+    if (level > LOUD_DBFS && g.level <= LOUD_DBFS && !loudConfirmed) {
+      if (!window.confirm(`Go above ${LOUD_DBFS} dBFS? Loud test tones can damage hearing and speakers.`)) return;
+      loudConfirmed = true;
+    }
+    set({ level });
+  };
   const tonal = g.waveform === 'sine' || g.waveform === 'square' || g.waveform === 'triangle';
 
   return (
@@ -97,7 +107,7 @@ export function Generator() {
         )}
 
         <Field label={`Level  ${g.level.toFixed(0)} dBFS`} hint="RMS, relative to a full-scale sine. Start low, as test tones can damage hearing and speakers.">
-          <input className="slider" type="range" min={-60} max={0} step={1} value={g.level} onChange={(e) => set({ level: Number(e.target.value) })} aria-label="Level" />
+          <input className="slider" type="range" min={-60} max={0} step={1} value={g.level} onChange={(e) => setLevel(Number(e.target.value))} aria-label="Level" />
         </Field>
 
         <Field label="Output">

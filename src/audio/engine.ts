@@ -92,12 +92,9 @@ class AudioEngine {
     // iOS 16.4+: let mic and speaker run together at full volume.
     const nav = navigator as Navigator & { audioSession?: { type: string } };
     if (nav.audioSession) nav.audioSession.type = 'play-and-record';
-    let ctx: AudioContext;
-    try {
-      ctx = new AudioContext({ sampleRate: 48000, latencyHint: 'interactive' });
-    } catch {
-      ctx = new AudioContext({ latencyHint: 'interactive' });
-    }
+    // Use the device's own rate (48 kHz on iPhones): forcing a rate that differs from the
+    // mic's makes Safari resample or refuse to connect the mic. DSP adapts to any rate.
+    const ctx = new AudioContext({ latencyHint: 'interactive' });
     this.ctx = ctx;
     void ctx.resume();
     this.ready = (async () => {

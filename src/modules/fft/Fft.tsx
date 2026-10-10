@@ -10,6 +10,7 @@ import { msToDbfs } from '../../dsp/levels';
 import { getCalibration } from '../../store/calibration';
 import { usePersistentState } from '../../store/persist';
 import { canvasTheme } from '../../theme/theme';
+import { formatFreq } from '../../dsp/format';
 import { GeneratorToolButton } from '../generator/GeneratorToolButton';
 
 const SIZES = [4096, 8192, 16384, 32768] as const;
@@ -198,7 +199,6 @@ export function Fft() {
     setCursorHz(f);
   };
 
-  const fmtHz = (f: number) => (f >= 1000 ? `${(f / 1000).toFixed(f >= 10000 ? 2 : 3)} kHz` : `${f.toFixed(1)} Hz`);
 
   return (
     <ModuleScreen
@@ -227,9 +227,9 @@ export function Fft() {
       <MicGate>
         <div className="analyzer">
           <div className="analyzer-readouts">
-            <Readout size="sm" label="Peak" value={read.peakDb > -200 ? fmtHz(read.peakHz) : '–'} tone="live" />
+            <Readout size="sm" label="Peak" value={read.peakDb > -200 ? formatFreq(read.peakHz) : '–'} tone="live" />
             <Readout size="sm" label="Peak level" value={fmtDb(read.peakDb)} tone="live" />
-            <Readout size="sm" label="Cursor" value={cursorHz ? fmtHz(cursorHz) : 'tap graph'} tone="dim" />
+            <Readout size="sm" label="Cursor" value={cursorHz ? formatFreq(cursorHz) : 'tap graph'} tone="dim" />
             <Readout size="sm" label="Level" value={fmtDb(read.cursorDb)} />
             <Readout size="sm" label="Resolution" value={`${binHz.toFixed(2)} Hz`} tone="dim" />
           </div>

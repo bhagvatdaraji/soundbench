@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useEngineStatus } from '../../audio/engine';
 import { MicGate } from '../../components/MicGate';
 import { ModuleScreen } from '../../components/ModuleScreen';
@@ -14,11 +14,12 @@ export function Calibration() {
   // Slow, Z-weighted: right for a 1 kHz calibrator, and steady enough to read.
   const spl = stats.now.ZS;
   const dbfs = Number.isFinite(spl) ? spl - cal.offsetDb : -Infinity;
+  const stable = useStable(dbfs);
   const nudge = (d: number) => setCalibration({ offsetDb: +(cal.offsetDb + d).toFixed(1), calibratedAt: new Date().toISOString() });
 
   const apply = () => {
     const r = Number(ref);
-    if (!Number.isFinite(r) || !Number.isFinite(dbfs)) return;
+    if (!Number.isFinite(r) || !Number.isFinite(dbfs) || !stable) return;
     setCalibration({ offsetDb: +(r - dbfs).toFixed(2), calibratedAt: new Date().toISOString() });
   };
 
@@ -41,8 +42,8 @@ export function Calibration() {
             <div className="cal-row">
               <input className="num cal-input" inputMode="decimal" value={ref} onChange={(e) => setRef(e.target.value)} aria-label="Reference level in dB SPL" />
               <span className="gen-unit">dB SPL</span>
-              <button className="btn primary" onClick={apply} disabled={!Number.isFinite(dbfs)}>
-                Set
+              <button className="btn primary" onClick={apply} disabled={!stable}>
+                {stable ? 'Set' : 'Settling…'}
               </button>
             </div>
           </Field>
@@ -75,4 +76,30 @@ export function Calibration() {
       </MicGate>
     </ModuleScreen>
   );
+}
+
+/** True once the reading has stayed within ±0.15 dB for the last 2 seconds. */
+function useStable(db: number): boolean {
+  const history = useRef<{ t: number; v: number }[]>([]);
+  const [stable, setStable] = useState(false);
+  useEffect(() => {
+    const now = performance.now();
+    const h = history.current;
+    if (!Number.isFinite(db)) {
+      h.length = 0;
+      setStable(false);
+      return;
+    }
+    h.push({ t: now, v: db });
+    while (h.length && now - h[0].t > 2000) h.shift();
+    const span = h.length ? now - h[0].t : 0;
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const p of h) {
+      lo = Math.min(lo, p.v);
+      hi = Math.max(hi, p.v);
+    }
+    setStable(span > 1800 && hi - lo < 0.3);
+  }, [db]);
+  return stable;
 }

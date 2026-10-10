@@ -63,16 +63,17 @@ export function Rta() {
       const dt = msg.samples / rate;
       const aF = 1 - Math.exp(-dt / TAU.F);
       const aS = 1 - Math.exp(-dt / TAU.S);
+      const settling = d.settle > 0;
+      if (settling) d.settle--;
       for (let i = 0; i < msg.ms.length; i++) {
         const ms = msg.ms[i];
         d.fast[i] += aF * (ms - d.fast[i]);
         d.slow[i] += aS * (ms - d.slow[i]);
-        d.energy[i] += ms * msg.samples;
+        if (!settling) d.energy[i] += ms * msg.samples;
       }
-      d.samples += msg.samples;
+      if (!settling) d.samples += msg.samples;
       const avg = currentMs();
-      if (d.settle > 0) d.settle--;
-      else for (let i = 0; i < avg.length; i++) if (avg[i] > d.max[i]) d.max[i] = avg[i];
+      if (!settling) for (let i = 0; i < avg.length; i++) if (avg[i] > d.max[i]) d.max[i] = avg[i];
       // Readouts at report rate (30 Hz) are cheap enough for React.
       const st = settingsRef.current;
       let total = 0;
